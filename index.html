@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MMT 合盤報告產生器</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0B1A3E;--gold:#C9A84C;
+  --wind:#1D9E75;--fire:#D85A30;--water:#3B8BDB;--earth:#BA7517;
+  --bg:#F5F4F0;--surface:#fff;--surface2:#F1EFE8;
+  --border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.16);
+  --text:#1A1A1A;--muted:#6B6B6B;--hint:#A0A0A0;
+  --r:10px;--rl:14px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;font-size:14px}
+
+/* GATE */
+.gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:var(--navy)}
+.gate-card{background:#fff;border-radius:var(--rl);padding:2.5rem;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.gate-logo{display:flex;align-items:center;gap:12px;margin-bottom:1.75rem}
+.gate-icon{width:46px;height:46px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center}
+.g-title{font-size:19px;font-weight:700;color:var(--navy)}
+.g-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.g-desc{font-size:13px;color:var(--muted);margin-bottom:1.25rem;line-height:1.7}
+.g-lbl{font-size:11px;color:var(--muted);display:block;margin-bottom:5px}
+.g-inp{width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:monospace;color:var(--text);background:#fff;margin-bottom:.75rem}
+.g-inp:focus{outline:none;border-color:var(--navy)}
+.g-btn{width:100%;background:var(--navy);color:#fff;border:none;padding:12px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
+.g-btn:hover{opacity:.88}
+.g-note{margin-top:.75rem;font-size:11px;color:var(--hint);text-align:center;line-height:1.6}
+.g-note a{color:var(--water)}
+
+/* APP */
+#app{display:none}
+.topbar{background:var(--navy);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.tb-l{display:flex;align-items:center;gap:10px}
+.tb-icon{width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.35);display:flex;align-items:center;justify-content:center}
+.tb-title{font-size:14px;font-weight:700;color:var(--gold)}
+.tb-sub{font-size:10px;color:rgba(255,255,255,.4);margin-top:1px}
+.key-pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:4px 12px;font-size:11px;color:rgba(255,255,255,.55);cursor:pointer}
+.key-pill:hover{background:rgba(255,255,255,.14)}
+
+/* TABS */
+.tab-bar{background:#fff;border-bottom:1px solid var(--border2);display:flex;padding:0 1.25rem;position:sticky;top:54px;z-index:100}
+.tab-btn{padding:12px 18px;font-size:13px;font-weight:500;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:.15s;font-family:inherit}
+.tab-btn.on{color:var(--navy);border-bottom-color:var(--gold)}
+
+.container{max-width:980px;margin:0 auto;padding:1.25rem 1rem}
+
+/* SECTION HEADER */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px}
+.sec-title{font-size:13px;font-weight:700;color:var(--text)}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap}
+.btn{padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:.15s;white-space:nowrap}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{opacity:.88}
+.btn-secondary{background:#fff;color:var(--text);border:1px solid var(--border2)}.btn-secondary:hover{border-color:var(--navy)}
+.btn-gold{background:var(--gold);color:var(--navy)}.btn-gold:hover{opacity:.88}
+
+/* TABLE */
+.tbl-wrap{background:#fff;border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:.75rem}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:860px}
+thead th{background:var(--navy);padding:8px 6px;font-size:11px;font-weight:600;color:var(--gold);text-align:center;white-space:nowrap;border-right:1px solid rgba(255,255,255,.07)}
+thead th.th-left{text-align:left;padding-left:12px}
+thead th:last-child{border-right:none}
+thead tr.sub-hdr th{background:rgba(11,26,62,.85);font-size:10px;color:rgba(201,168,76,.75);padding:5px 6px}
+tbody tr{border-bottom:.5px solid var(--border)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover td{background:#FAFAF8}
+td{padding:5px 5px;text-align:center;vertical-align:middle}
+td.td-left{text-align:left;padding-left:10px}
+.ci{width:100%;padding:5px 5px;border:1px solid transparent;border-radius:5px;font-size:12px;text-align:center;background:transparent;color:var(--text);font-family:inherit;transition:.1s}
+.ci:focus{outline:none;border-color:var(--gold);background:#FFFDF0}
+.ci-name{text-align:left;font-weight:600;min-width:70px}
+.ci-pct{width:48px}
+.ci-num{width:36px}
+.row-del{background:none;border:none;color:var(--hint);cursor:pointer;font-size:14px;padding:3px 6px;border-radius:4px}
+.row-del:hover{color:#993C1D;background:#FAECE7}
+
+/* CHIPS */
+.chip{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:600;margin:1px;white-space:nowrap}
+.chip-g{background:var(--navy);color:var(--gold)}
+.chip-m{background:#185FA5;color:#fff}
+.chip-s{background:#7A2020;color:#fff}
+.chip-y{background:#0A5C3C;color:#fff}
+.chip-wind{background:#E1F5EE;color:#0F6E56}
+.chip-fire{background:#FAECE7;color:#993C1D}
+.chip-water{background:#E6F1FB;color:#185FA5}
+.chip-earth{background:#FAEEDA;color:#854F0B}
+
+/* CARDS */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:1rem}
+.pc{background:#fff;border:1px solid var(--border);border-radius:var(--rl);padding:1rem;transition:box-shadow .15s;position:relative;cursor:pointer}
+.pc:hover{box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.pc.sel{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.22)}
+.pc-sel-dot{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;background:#fff;transition:.15s;flex-shrink:0}
+.pc.sel .pc-sel-dot{background:var(--gold);border-color:var(--gold);color:var(--navy);font-weight:700}
+.pc-hdr{display:flex;align-items:center;gap:9px;margin-bottom:.7rem}
+.pc-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.pc-name{font-size:13px;font-weight:700}
+.pc-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.bar-row{display:flex;align-items:center;gap:5px;margin:3px 0}
+.bar-lbl{font-size:10px;width:22px;color:var(--muted)}
+.bar-track{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px}
+.bar-val{font-size:10px;width:28px;text-align:right;color:var(--muted)}
+.pc-chips{display:flex;flex-wrap:wrap;gap:2px;margin-top:7px}
+
+/* GEN BAR */
+.gen-bar{background:#fff;border:1px solid var(--border);border-radius:var(--rl);padding:1rem;margin-bottom:1rem;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.gb-group{flex:1;min-width:180px}
+.gb-group label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px}
+.gb-group input,.gb-group select{width:100%;padding:7px 9px;border:1px solid var(--border2);border-radius:7px;font-size:12px;color:var(--text);background:#fff;font-family:inherit}
+.gb-group input:focus,.gb-group select:focus{outline:none;border-color:var(--navy)}
+.sel-status{font-size:12px;color:var(--muted);white-space:nowrap}
+.sel-status strong{color:var(--navy)}
+
+/* REPORT */
+.report-shell{background:#fff;border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.rpt-hdr{background:var(--navy);padding:1.5rem}
+.rpt-title{color:var(--gold);font-size:17px;font-weight:700;margin-bottom:4px}
+.rpt-sub{color:rgba(255,255,255,.5);font-size:12px}
+.rpt-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:.85rem}
+.rpt-chip{background:rgba(255,255,255,.08);border:1px solid rgba(201,168,76,.3);border-radius:20px;padding:4px 12px;font-size:12px;color:#fff}
+.rpt-body{padding:1.5rem}
+.r-sec{margin-bottom:1.75rem}
+.r-sec:last-child{margin-bottom:0}
+.r-sec-hdr{display:flex;align-items:center;gap:8px;padding-bottom:.5rem;border-bottom:2px solid var(--gold);margin-bottom:.9rem}
+.r-sec-icon{width:24px;height:24px;border-radius:6px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0}
+.r-sec-title{font-size:13px;font-weight:700}
+.r-blk{background:var(--surface2);border-radius:var(--r);padding:1rem;margin-bottom:8px}
+.r-content{font-size:13px;color:var(--text);line-height:1.9;white-space:pre-wrap}
+.r-blk-foot{display:flex;justify-content:flex-end;margin-top:7px}
+.edit-btn{background:none;border:1px solid var(--border2);border-radius:5px;padding:3px 9px;font-size:11px;cursor:pointer;color:var(--muted);font-family:inherit}
+.edit-btn:hover{border-color:var(--navy);color:var(--navy)}
+.edit-ta{width:100%;min-height:120px;padding:9px;border:1px solid var(--border2);border-radius:7px;font-size:13px;line-height:1.8;resize:vertical;font-family:inherit;color:var(--text);background:#fff}
+.save-btn{background:var(--navy);color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;margin-top:5px;font-family:inherit}
+.ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:1.25rem}
+.ov-card{background:var(--surface2);border-radius:var(--r);padding:.85rem;border-left:3px solid var(--gold)}
+.ov-hdr{display:flex;align-items:center;gap:8px;margin-bottom:.6rem}
+.ov-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.ov-name{font-size:13px;font-weight:700}
+
+/* MISC */
+.loading{text-align:center;padding:3rem 1rem;color:var(--muted)}
+.spinner{width:30px;height:30px;border:3px solid var(--border2);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err-box{background:#FAECE7;border:1px solid #F0997B;border-radius:var(--r);padding:1rem;color:#993C1D;font-size:13px;line-height:1.7;margin:1rem}
+.action-row{display:flex;gap:8px;margin-top:.75rem;flex-wrap:wrap}
+.action-row .btn{flex:1}
+.save-notice{position:fixed;bottom:1rem;right:1rem;background:var(--navy);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+.save-notice.show{opacity:1}
+.hint-text{font-size:11px;color:var(--hint);margin-top:4px;padding-left:2px}
+
+@media print{.topbar,.tab-bar,.gen-bar,.action-row,.edit-btn,.r-blk-foot{display:none!important}body{background:#fff}.rpt-hdr{background:var(--navy)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media(max-width:640px){.tab-btn{padding:10px 10px;font-size:12px}.tb-sub{display:none}}
+</style>
+</head>
+<body>
+
+<!-- Gate -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="gate-logo">
+      <div class="gate-icon">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+          <circle cx="13" cy="13" r="10" stroke="#C9A84C" stroke-width="1.5"/>
+          <path d="M8 13L13 8L18 13L13 18Z" stroke="#C9A84C" stroke-width="1.2" fill="none"/>
+          <circle cx="13" cy="13" r="2.5" fill="#C9A84C"/>
+        </svg>
+      </div>
+      <div><div class="g-title">MMT 合盤報告產生器</div><div class="g-sub">Mercury Mental Thinking</div></div>
+    </div>
+    <p class="g-desc">請輸入你的 Anthropic API Key 開始使用。<br>Key 僅存於瀏覽器記憶體，不會上傳至任何伺服器。</p>
+    <label class="g-lbl">Anthropic API Key</label>
+    <input type="password" class="g-inp" id="key-input" placeholder="sk-ant-api03-..." autocomplete="off">
+    <button class="g-btn" onclick="startApp()">進入工具</button>
+    <p class="g-note">還沒有 Key？<a href="https://console.anthropic.com/settings/keys" target="_blank">前往申請</a></p>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <div class="topbar">
+    <div class="tb-l">
+      <div class="tb-icon">
+        <svg width="17" height="17" viewBox="0 0 22 22" fill="none">
+          <circle cx="11" cy="11" r="9" stroke="#C9A84C" stroke-width="1.3"/>
+          <path d="M7 11L11 7L15 11L11 15Z" stroke="#C9A84C" stroke-width="1.1" fill="none"/>
+          <circle cx="11" cy="11" r="2.2" fill="#C9A84C"/>
+        </svg>
+      </div>
+      <div><div class="tb-title">MMT 合盤報告產生器</div><div class="tb-sub">Mercury Mental Thinking</div></div>
+    </div>
+    <div class="key-pill" onclick="changeKey()">🔑 更換 API Key</div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn on" id="tab-input" onclick="switchTab('input')">📋 資料輸入</button>
+    <button class="tab-btn" id="tab-cards" onclick="switchTab('cards')">🃏 天賦卡片</button>
+    <button class="tab-btn" id="tab-report" onclick="switchTab('report')">📄 合盤報告</button>
+  </div>
+
+  <!-- 資料輸入 -->
+  <div id="pane-input" class="container">
+    <div class="sec-hdr">
+      <div class="sec-title">成員天賦資料表</div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="addRow()">+ 新增成員</button>
+        <button class="btn btn-primary" onclick="saveData()">💾 儲存</button>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <div class="tbl-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th class="th-left" rowspan="2" style="min-width:80px">個案</th>
+              <th colspan="4">四大能量（%）</th>
+              <th colspan="2">年度策略</th>
+              <th colspan="6">天賦牌（號碼 0–21，最多6張）</th>
+              <th colspan="1">導師</th>
+              <th colspan="1">陰影</th>
+              <th rowspan="2" style="width:32px"></th>
+            </tr>
+            <tr class="sub-hdr">
+              <th style="color:#6EE7B7">風</th>
+              <th style="color:#FCA5A5">火</th>
+              <th style="color:#93C5FD">水</th>
+              <th style="color:#FCD34D">土</th>
+              <th>目前</th><th>生日後</th>
+              <th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th><th>⑥</th>
+              <th>導</th><th>影</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="hint-text">💡 填入號碼即可（0–21）。資料自動儲存於瀏覽器，下次開啟仍在。</div>
+  </div>
+
+  <!-- 天賦卡片 -->
+  <div id="pane-cards" class="container" style="display:none">
+    <div class="sec-hdr">
+      <div class="sec-title">天賦卡片 — 點擊選取要合盤的成員</div>
+      <div class="btn-row">
+        <span class="sel-status">已選 <strong id="sel-num">0</strong> 人</span>
+        <button class="btn btn-secondary" onclick="clearSel()">取消全選</button>
+        <button class="btn btn-gold" onclick="goReport()">生成合盤報告 →</button>
+      </div>
+    </div>
+    <p class="hint-text" style="margin-bottom:.9rem">選取 2–6 人後點「生成合盤報告」</p>
+    <div class="card-grid" id="card-grid"></div>
+  </div>
+
+  <!-- 合盤報告 -->
+  <div id="pane-report" class="container" style="display:none">
+    <div class="gen-bar">
+      <div class="gb-group">
+        <label>團隊 / 情境名稱</label>
+        <input type="text" id="ctx-name" placeholder="例：業務三人組、2026 核心團隊">
+      </div>
+      <div class="gb-group">
+        <label>分析目的</label>
+        <select id="ctx-purpose">
+          <option>商業團隊協作</option><option>職場分工建議</option>
+          <option>合夥人評估</option><option>人際關係解析</option>
+          <option>親子/家庭關係</option><option>情感關係分析</option>
+        </select>
+      </div>
+      <div class="gb-group" style="min-width:120px">
+        <label>已選成員</label>
+        <div id="gen-chips" style="display:flex;flex-wrap:wrap;gap:3px;min-height:32px;align-items:center"></div>
+      </div>
+      <button class="btn btn-gold" id="gen-btn" onclick="generateReport()">✦ AI 生成報告</button>
+    </div>
+    <div id="report-area">
+      <div style="text-align:center;padding:3rem;color:var(--muted);font-size:13px">請先在「天賦卡片」頁選取 2–6 人，再點「生成合盤報告」。</div>
+    </div>
+    <div class="action-row" id="rpt-actions" style="display:none">
+      <button class="btn btn-secondary" onclick="switchTab('cards')">← 重新選人</button>
+      <button class="btn btn-secondary" onclick="generateReport()">↺ 重新生成</button>
+      <button class="btn btn-secondary" onclick="window.print()">🖨 列印 / PDF</button>
+    </div>
+  </div>
+</div>
+
+<div class="save-notice" id="sv-notice">✓ 已儲存</div>
+
+<script>
+const CN={0:"創意家",1:"整合者",2:"敏銳者",3:"美學家",4:"挑戰者",5:"傳教者",6:"演繹家",7:"守護者",8:"啟導者",9:"穿透者",10:"顯化者",11:"權威者",12:"趨勢家",13:"改革者",14:"使命家",15:"策略家",16:"執行者",17:"理想家",18:"感知者",19:"光之子",20:"計畫者",21:"建構者"};
+const CE={0:"wind",1:"wind",2:"water",3:"water",4:"fire",5:"earth",6:"wind",7:"water",8:"fire",9:"earth",10:"earth",11:"wind",12:"water",13:"water",14:"fire",15:"water",16:"fire",17:"wind",18:"water",19:"fire",20:"wind",21:"earth"};
+const EC={wind:"#1D9E75",fire:"#D85A30",water:"#3B8BDB",earth:"#BA7517"};
+const EN={wind:"風",fire:"火",water:"水",earth:"土"};
+const ENAME={wind:"風能量",fire:"火能量",water:"水能量",earth:"土能量"};
+const CDESC={0:"創新靈感、突破框架，重新定義價值",1:"知識整合橋樑，連結資源系統",2:"高度敏銳，建立深度情感連結",3:"美感號召力強，打造品牌形象",4:"衝鋒領導，強烈企圖心推動突破",5:"說服力強，傳遞價值的溝通天才",6:"人緣出眾，建立信任媒合人際",7:"細膩守護，維護秩序與安全感",8:"啟發激勵，帶領他人超越設限",9:"洞察核心，直指問題本質",10:"顯化落地，願景轉為實際資源",11:"優雅權威，品味與專業並重",12:"趨勢敏銳，創造舞台讓他人發光",13:"深度革新，推動顛覆性變革",14:"故事引領，使命感強啟發方向",15:"策略縝密，風險嗅覺敏銳",16:"執行到位，業績推進落實目標",17:"理想主義，媒合智慧搭建橋樑",18:"直覺深邃，連結無形能量與人心",19:"光芒四射，天生領袖與舞台魅力",20:"精準計劃，高度責任感的守衛",21:"結構建立，穩定傳承打造組織"};
+
+let API_KEY="";
+let DB=[];
+let SEL=new Set();
+
+function emptyMember(){return{name:"",wind:"",fire:"",water:"",earth:"",ys_cur:"",ys_next:"",gifts:["","","","","",""],mentor:"",shadow:""};}
+function domE(m){const v={wind:+m.wind||0,fire:+m.fire||0,water:+m.water||0,earth:+m.earth||0};return Object.keys(v).reduce((a,b)=>v[a]>v[b]?a:b);}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+/* ── STORAGE ── */
+function saveData(){
+  localStorage.setItem("mmt_db_v2",JSON.stringify(DB));
+  const n=document.getElementById("sv-notice");
+  n.classList.add("show");
+  setTimeout(()=>n.classList.remove("show"),2000);
+}
+function loadData(){
+  try{const r=localStorage.getItem("mmt_db_v2");if(r)DB=JSON.parse(r);}catch(e){}
+  if(!DB.length)DB=[emptyMember(),emptyMember(),emptyMember()];
+}
+
+/* ── GATE ── */
+function startApp(){
+  const k=document.getElementById("key-input").value.trim();
+  if(!k.startsWith("sk-ant-")){alert("請輸入有效的 API Key（以 sk-ant- 開頭）");return;}
+  API_KEY=k;
+  document.getElementById("gate").style.display="none";
+  document.getElementById("app").style.display="block";
+  loadData();renderTable();renderCards();
+}
+function changeKey(){
+  if(confirm("確定更換 API Key？")){
+    document.getElementById("key-input").value="";
+    document.getElementById("gate").style.display="flex";
+    document.getElementById("app").style.display="none";
+    API_KEY="";
+  }
+}
+document.addEventListener("DOMContentLoaded",()=>{
+  document.getElementById("key-input").addEventListener("keydown",e=>{if(e.key==="Enter")startApp();});
+});
+
+/* ── TABLE ── */
+function renderTable(){
+  const tb=document.getElementById("table-body");
+  tb.innerHTML="";
+  DB.forEach((m,i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td class="td-left"><input class="ci ci-name" value="${esc(m.name)}" placeholder="姓名" oninput="DB[${i}].name=this.value;debounceSave()"></td>
+      <td><input class="ci ci-pct" type="number" min="0" max="100" value="${m.wind}" placeholder="0" oninput="DB[${i}].wind=this.value;debounceSave()"></td>
+      <td><input class="ci ci-pct" type="number" min="0" max="100" value="${m.fire}" placeholder="0" oninput="DB[${i}].fire=this.value;debounceSave()"></td>
+      <td><input class="ci ci-pct" type="number" min="0" max="100" value="${m.water}" placeholder="0" oninput="DB[${i}].water=this.value;debounceSave()"></td>
+      <td><input class="ci ci-pct" type="number" min="0" max="100" value="${m.earth}" placeholder="0" oninput="DB[${i}].earth=this.value;debounceSave()"></td>
+      <td><input class="ci ci-num" type="number" min="0" max="21" value="${m.ys_cur}" placeholder="—" oninput="DB[${i}].ys_cur=this.value;debounceSave()"></td>
+      <td><input class="ci ci-num" type="number" min="0" max="21" value="${m.ys_next}" placeholder="—" oninput="DB[${i}].ys_next=this.value;debounceSave()"></td>
+      ${[0,1,2,3,4,5].map(j=>`<td><input class="ci ci-num" type="number" min="0" max="21" value="${m.gifts[j]}" placeholder="—" oninput="DB[${i}].gifts[${j}]=this.value;debounceSave()"></td>`).join("")}
+      <td><input class="ci ci-num" type="number" min="0" max="21" value="${m.mentor}" placeholder="—" oninput="DB[${i}].mentor=this.value;debounceSave()"></td>
+      <td><input class="ci ci-num" type="number" min="0" max="21" value="${m.shadow}" placeholder="—" oninput="DB[${i}].shadow=this.value;debounceSave()"></td>
+      <td><button class="row-del" onclick="delRow(${i})" title="刪除">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+let dsTimer;
+function debounceSave(){clearTimeout(dsTimer);dsTimer=setTimeout(()=>{saveData();renderCards();},700);}
+function addRow(){DB.push(emptyMember());renderTable();renderCards();}
+function delRow(i){
+  if(!confirm(`確定刪除「${DB[i].name||"此成員"}」？`))return;
+  DB.splice(i,1);
+  SEL=new Set([...SEL].filter(x=>x!==i).map(x=>x>i?x-1:x));
+  saveData();renderTable();renderCards();
+}
+
+/* ── CARDS ── */
+function renderCards(){
+  const grid=document.getElementById("card-grid");
+  grid.innerHTML="";
+  DB.forEach((m,i)=>{
+    if(!m.name)return;
+    const de=domE(m);
+    const col=EC[de];
+    const initials=m.name.slice(0,2);
+    const gifts=[...new Set(m.gifts.filter(g=>g!=="").map(g=>+g))];
+    const total=(+m.wind||0)+(+m.fire||0)+(+m.water||0)+(+m.earth||0)||100;
+    const card=document.createElement("div");
+    card.className="pc"+(SEL.has(i)?" sel":"");
+    card.innerHTML=`
+      <div class="pc-sel-dot">✓</div>
+      <div class="pc-hdr">
+        <div class="pc-av" style="background:${col}22;color:${col}">${initials}</div>
+        <div>
+          <div class="pc-name">${esc(m.name)} <span class="chip chip-${de}">${ENAME[de]}</span></div>
+          <div class="pc-sub">天賦 ${gifts.map(n=>`${n}·${CN[n]||""}`).join(" / ")||"未填"}</div>
+        </div>
+      </div>
+      <div>
+        ${["wind","fire","water","earth"].map(e=>`
+          <div class="bar-row">
+            <div class="bar-lbl" style="color:${EC[e]}">${EN[e]}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${(+m[e]||0)/total*100}%;background:${EC[e]}"></div></div>
+            <div class="bar-val">${m[e]||0}%</div>
+          </div>`).join("")}
+      </div>
+      <div class="pc-chips">
+        ${gifts.map(n=>`<span class="chip chip-g">${n} ${CN[n]||""}</span>`).join("")}
+        ${m.mentor!==""?`<span class="chip chip-m">${m.mentor} ${CN[+m.mentor]||""}</span>`:""}
+        ${m.shadow!==""?`<span class="chip chip-s">${m.shadow} ${CN[+m.shadow]||""}</span>`:""}
+        ${m.ys_cur!==""?`<span class="chip chip-y">年策${m.ys_cur} ${CN[+m.ys_cur]||""}</span>`:""}
+      </div>`;
+    card.onclick=()=>toggleSel(i);
+    grid.appendChild(card);
+  });
+  document.getElementById("sel-num").textContent=SEL.size;
+}
+function toggleSel(i){
+  if(SEL.has(i)){SEL.delete(i);}
+  else{if(SEL.size>=6){alert("最多選擇 6 人");return;}SEL.add(i);}
+  renderCards();updateGenChips();
+}
+function clearSel(){SEL.clear();renderCards();updateGenChips();}
+function updateGenChips(){
+  const el=document.getElementById("gen-chips");
+  if(!el)return;
+  el.innerHTML=[...SEL].map(i=>{const m=DB[i];if(!m)return"";const de=domE(m);return`<span class="chip chip-${de}">${esc(m.name)}</span>`;}).join("");
+}
+function goReport(){
+  if(SEL.size<2){alert("請至少選擇 2 位成員");return;}
+  switchTab("report");updateGenChips();
+}
+
+/* ── TABS ── */
+function switchTab(name){
+  ["input","cards","report"].forEach(t=>{
+    document.getElementById("pane-"+t).style.display=t===name?"block":"none";
+    document.getElementById("tab-"+t).classList.toggle("on",t===name);
+  });
+  if(name==="cards")renderCards();
+  if(name==="report")updateGenChips();
+}
+
+/* ── GENERATE ── */
+async function generateReport(){
+  const sel=[...SEL].map(i=>DB[i]).filter(m=>m&&m.name);
+  if(sel.length<2){alert("請先在「天賦卡片」頁選取 2–6 位成員");return;}
+  if(!API_KEY){alert("請先設定 API Key");return;}
+
+  document.getElementById("rpt-actions").style.display="none";
+  document.getElementById("report-area").innerHTML=`<div class="loading"><div class="spinner"></div>AI 正在分析天賦合盤…<br><span style="font-size:11px;opacity:.5;display:block;margin-top:5px">約需 15–25 秒</span></div>`;
+
+  const ctxName=document.getElementById("ctx-name").value.trim()||"團隊合盤";
+  const ctxPurpose=document.getElementById("ctx-purpose").value;
+
+  const summaries=sel.map(m=>{
+    const gifts=[...new Set(m.gifts.filter(g=>g!=="").map(g=>+g))];
+    const de=domE(m);
+    const total=(+m.wind||0)+(+m.fire||0)+(+m.water||0)+(+m.earth||0)||100;
+    const gStr=gifts.map(n=>`${n}號${CN[n]||""}`).join("、")||"未填";
+    const mStr=m.mentor!==""?`${m.mentor}號${CN[+m.mentor]||""}`:"無";
+    const sStr=m.shadow!==""?`${m.shadow}號${CN[+m.shadow]||""}`:"無";
+    const ysStr=m.ys_cur!==""?`目前${m.ys_cur}號${CN[+m.ys_cur]||""}`:"";
+    const ysNext=m.ys_next!==""?`、生日後${m.ys_next}號${CN[+m.ys_next]||""}`:"";
+    return `【${m.name}】
+- 主能量：${ENAME[de]}（風${m.wind||0}% 火${m.fire||0}% 水${m.water||0}% 土${m.earth||0}%）
+- 天賦牌：${gStr}
+- 導師牌：${mStr}
+- 陰影牌：${sStr}
+- 年度策略：${ysStr}${ysNext}`;
+  }).join("\n\n");
+
+  const system=`你是專業的 MMT 商業發展策略顧問，精通 Mercury Mental Thinking 天賦系統（整合畢達哥拉斯數字學、西方數據文學與榮格心理學）。四大能量：風（顧問型，邏輯/知識/創新）、水（滲透型，關係/情感/凝聚）、火（競爭型，行動/執行/業績）、土（落實型，結構/財務/穩定）。22張天賦牌各有獨特行為科學特質。語言使用「行為科學」「心智模型」「能量特質」，嚴格禁止「占星」「玄學」等詞。繁體中文，語氣專業有洞察力，每點有實質內容。`;
+
+  const prompt=`分析情境：「${ctxName}」，目的：${ctxPurpose}，共 ${sel.length} 人。\n\n${summaries}\n\n請生成完整 MMT 合盤分析報告，嚴格按以下六區塊輸出，每區塊標題用【】包住：\n\n【個人天賦與職場定位分析】\n每位成員各一段（用姓名當小標），包含：核心天賦優勢2–3點、導師牌卡點1點、陰影牌覺察1點、最適職場定位。\n\n【團隊能量合盤（Synastry）】\n整體能量優勢特色、潛在缺口、成員間互補關係。\n\n【最強互為動力機制】\n最關鍵的天賦互補對、飛輪效應、具體協作方式。\n\n【執行力與分工建議】\n五大核心功能分工（產品/銷售/人才/研發/財務），具體指名誰負責。\n\n【溝通策略（理解代替忍耐）】\n每位成員底層需求，以及其他人如何與其溝通的具體建議。\n\n【年度策略提點】\n每人當前年度策略牌的行動建議（1–2句）。`;
+
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:3500,system,messages:[{role:"user",content:prompt}]})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${res.status}`);}
+    const data=await res.json();
+    const text=data.content?.map(c=>c.text||"").join("")||"";
+    if(!text)throw new Error("AI 回應為空");
+    renderReport(sel,ctxName,ctxPurpose,text);
+  }catch(err){
+    document.getElementById("report-area").innerHTML=`<div class="err-box"><strong>生成失敗</strong><br>${esc(err.message)}<br><br>請確認 API Key 正確且帳戶有餘額。</div>`;
+  }
+}
+
+function renderReport(sel,ctxName,ctxPurpose,text){
+  const chips=sel.map(m=>{const de=domE(m);return`<div class="rpt-chip"><span style="color:${EC[de]}">${ENAME[de]}</span> ${esc(m.name)}</div>`;}).join("");
+  const ovCards=sel.map(m=>{
+    const de=domE(m);const col=EC[de];
+    const gifts=[...new Set(m.gifts.filter(g=>g!=="").map(g=>+g))];
+    const total=(+m.wind||0)+(+m.fire||0)+(+m.water||0)+(+m.earth||0)||100;
+    const bars=["wind","fire","water","earth"].map(e=>`<div class="bar-row"><div class="bar-lbl" style="color:${EC[e]}">${EN[e]}</div><div class="bar-track"><div class="bar-fill" style="width:${(+m[e]||0)/total*100}%;background:${EC[e]}"></div></div><div class="bar-val">${m[e]||0}%</div></div>`).join("");
+    return`<div class="ov-card"><div class="ov-hdr"><div class="ov-av" style="background:${col}22;color:${col}">${m.name.slice(0,2)}</div><div><div class="ov-name">${esc(m.name)} <span class="chip chip-${de}">${ENAME[de]}</span></div></div></div>${bars}<div class="pc-chips">${gifts.map(n=>`<span class="chip chip-g">${n} ${CN[n]||""}</span>`).join("")}${m.mentor!==""?`<span class="chip chip-m">${m.mentor} ${CN[+m.mentor]||""}</span>`:""}${m.shadow!==""?`<span class="chip chip-s">${m.shadow} ${CN[+m.shadow]||""}</span>`:""}${m.ys_cur!==""?`<span class="chip chip-y">年策${m.ys_cur}</span>`:""}</div></div>`;
+  }).join("");
+
+  const secs=[
+    {k:"個人天賦與職場定位分析",i:"◉",t:"個人天賦與職場定位分析"},
+    {k:"團隊能量合盤",i:"⬡",t:"團隊能量合盤（Synastry）"},
+    {k:"最強互為動力機制",i:"⚡",t:"最強互為動力機制"},
+    {k:"執行力與分工建議",i:"◈",t:"執行力與分工建議"},
+    {k:"溝通策略",i:"◎",t:"溝通策略（理解代替忍耐）"},
+    {k:"年度策略提點",i:"◷",t:"年度策略提點"},
+  ];
+  let secsHTML="";
+  secs.forEach((s,idx)=>{
+    const pat=new RegExp(`【${s.k}[^】]*】\\s*([\\s\\S]*?)(?=【[^】]+】|$)`,"i");
+    const mm=text.match(pat);
+    const content=mm&&mm[1]?mm[1].trim():"";
+    if(!content)return;
+    const id=`rs${idx}`;
+    secsHTML+=`<div class="r-sec"><div class="r-sec-hdr"><div class="r-sec-icon">${s.i}</div><div class="r-sec-title">${s.t}</div></div><div class="r-blk"><div class="r-content" id="${id}">${esc(content)}</div><div class="r-blk-foot"><button class="edit-btn" onclick="toggleEdit('${id}',this)">✏ 編輯</button></div></div></div>`;
+  });
+  if(!secsHTML)secsHTML=`<div class="r-blk"><div class="r-content">${esc(text)}</div></div>`;
+
+  document.getElementById("report-area").innerHTML=`<div class="report-shell"><div class="rpt-hdr"><div class="rpt-title">${esc(ctxName)} — 合盤分析報告</div><div class="rpt-sub">分析目的：${ctxPurpose} ｜ ${sel.length} 位成員 ｜ ${new Date().toLocaleDateString("zh-TW")}</div><div class="rpt-chips">${chips}</div></div><div class="rpt-body"><div class="r-sec"><div class="r-sec-hdr"><div class="r-sec-icon">◉</div><div class="r-sec-title">成員天賦速覽</div></div><div class="ov-grid">${ovCards}</div></div>${secsHTML}</div></div>`;
+  document.getElementById("rpt-actions").style.display="flex";
+}
+
+function toggleEdit(id,btn){
+  const el=document.getElementById(id);if(!el)return;
+  if(btn.textContent.includes("編輯")){
+    const orig=el.textContent;
+    el.innerHTML=`<textarea class="edit-ta">${orig}</textarea><br><button class="save-btn" onclick="saveEdit('${id}',this)">儲存</button>`;
+    btn.textContent="✕ 取消";
+  }else{
+    const ta=el.querySelector("textarea");
+    if(ta)el.innerHTML=esc(ta.value);
+    btn.textContent="✏ 編輯";
+  }
+}
+function saveEdit(id,btn){
+  const el=document.getElementById(id);
+  const ta=el?.querySelector("textarea");
+  if(!ta||!el)return;
+  el.innerHTML=esc(ta.value);
+  const eb=el.parentElement?.querySelector(".edit-btn");
+  if(eb)eb.textContent="✏ 編輯";
+}
+</script>
+</body>
+</html>
