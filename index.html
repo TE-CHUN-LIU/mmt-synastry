@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MMT 天賦資料庫</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0B1A3E;--gold:#C9A84C;
+  --wind:#1D9E75;--fire:#D85A30;--water:#3B8BDB;--earth:#BA7517;
+  --bg:#F5F4F0;--surface:#fff;--surface2:#F1EFE8;
+  --bd:rgba(0,0,0,.1);--bd2:rgba(0,0,0,.18);
+  --text:#1A1A1A;--muted:#555;--hint:#999;
+  --r:8px;--rl:12px;
+  --fz:14px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:var(--fz);line-height:1.6}
+
+/* GATE */
+.gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:var(--navy)}
+.gate-card{background:#fff;border-radius:var(--rl);padding:2.5rem;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.g-logo{display:flex;align-items:center;gap:12px;margin-bottom:1.75rem}
+.g-icon{width:46px;height:46px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.g-title{font-size:19px;font-weight:700;color:var(--navy)}
+.g-sub{font-size:12px;color:var(--muted)}
+.g-desc{font-size:13px;color:var(--muted);margin-bottom:1.25rem;line-height:1.7}
+.g-lbl{font-size:11px;color:var(--muted);display:block;margin-bottom:5px}
+.g-inp{width:100%;padding:10px 12px;border:1.5px solid var(--bd2);border-radius:8px;font-size:13px;font-family:monospace;margin-bottom:.75rem}
+.g-inp:focus{outline:none;border-color:var(--navy)}
+.g-btn{width:100%;background:var(--navy);color:#fff;border:none;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer}
+.g-note{margin-top:.75rem;font-size:11px;color:var(--hint);text-align:center}
+.g-note a{color:var(--water)}
+
+/* APP SHELL */
+#app{display:none}
+.topbar{background:var(--navy);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 1rem;position:sticky;top:0;z-index:300;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.tb-l{display:flex;align-items:center;gap:10px}
+.tb-icon{width:30px;height:30px;border-radius:50%;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);display:flex;align-items:center;justify-content:center}
+.tb-title{font-size:14px;font-weight:700;color:var(--gold)}
+.tb-sub{font-size:10px;color:rgba(255,255,255,.4)}
+.tb-r{display:flex;align-items:center;gap:6px}
+.pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:4px 11px;font-size:11px;color:rgba(255,255,255,.6);cursor:pointer;white-space:nowrap}
+.pill:hover{background:rgba(255,255,255,.15)}
+.pill.gold{background:rgba(201,168,76,.2);border-color:rgba(201,168,76,.5);color:var(--gold)}
+
+/* FONT SIZE SLIDER */
+.fz-bar{display:flex;align-items:center;gap:6px}
+.fz-bar label{font-size:10px;color:rgba(255,255,255,.5)}
+.fz-bar input{width:70px;accent-color:var(--gold)}
+
+/* TABS */
+.tab-bar{background:#fff;border-bottom:1.5px solid var(--bd2);display:flex;padding:0 1rem;position:sticky;top:52px;z-index:200;overflow-x:auto}
+.tab-btn{padding:11px 16px;font-size:13px;font-weight:500;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;font-family:inherit}
+.tab-btn.on{color:var(--navy);border-bottom-color:var(--gold);font-weight:700}
+
+.container{max-width:1100px;margin:0 auto;padding:1.25rem 1rem}
+
+/* FOLDER BAR */
+.folder-bar{display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap;background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:.6rem .85rem}
+.folder-label{font-size:11px;color:var(--muted);margin-right:2px;white-space:nowrap}
+.folder-tab{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--bd2);background:#fff;color:var(--text);white-space:nowrap;transition:.1s}
+.folder-tab:hover{border-color:var(--navy)}
+.folder-tab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.folder-add{padding:5px 10px;border-radius:20px;font-size:12px;cursor:pointer;border:1.5px dashed var(--bd2);background:transparent;color:var(--muted)}
+.folder-add:hover{border-color:var(--gold);color:var(--gold)}
+
+/* SECTION HEADER */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px}
+.sec-title{font-size:13px;font-weight:700}
+.btn-row{display:flex;gap:5px;flex-wrap:wrap}
+.btn{padding:6px 13px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:.12s;white-space:nowrap}
+.btn-navy{background:var(--navy);color:#fff}.btn-navy:hover{opacity:.85}
+.btn-out{background:#fff;color:var(--text);border:1.5px solid var(--bd2)}.btn-out:hover{border-color:var(--navy)}
+.btn-gold{background:var(--gold);color:var(--navy)}.btn-gold:hover{opacity:.88}
+.btn-red{background:#fff;color:#993C1D;border:1.5px solid #F0997B}.btn-red:hover{background:#FAECE7}
+.btn-green{background:#E1F5EE;color:#0A5C3C;border:1.5px solid #9FE1CB}.btn-green:hover{background:#C6F0E0}
+
+/* IMPORT */
+.import-bar{display:flex;align-items:center;gap:8px;padding:.75rem 1rem;background:#EAF3DE;border:1.5px solid #C0DD97;border-radius:var(--r);margin-bottom:.75rem;flex-wrap:wrap}
+.import-bar label{font-size:12px;color:#27500A;font-weight:600}
+.import-bar p{font-size:11px;color:#3B6D11;flex:1;min-width:200px}
+
+/* TABLE */
+.tbl-wrap{background:#fff;border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden;margin-bottom:.75rem}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:1000px}
+thead th{background:var(--navy);padding:8px 5px;font-size:11px;font-weight:600;color:var(--gold);text-align:center;white-space:nowrap;border-right:1px solid rgba(255,255,255,.07)}
+thead th.thl{text-align:left;padding-left:10px}
+thead th:last-child{border-right:none}
+thead tr.sub th{background:rgba(11,26,62,.88);font-size:10px;color:rgba(240,217,138,.8);padding:4px 5px}
+tbody tr{border-bottom:.5px solid var(--bd)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover td{background:#FAFAF8}
+td{padding:4px 4px;text-align:center;vertical-align:middle}
+td.tdl{text-align:left;padding-left:8px}
+.ci{width:100%;padding:4px 4px;border:1px solid transparent;border-radius:4px;font-size:12px;text-align:center;background:transparent;color:var(--text);font-family:inherit}
+.ci:focus{outline:none;border-color:var(--gold);background:#FFFDF0}
+.ci-name{text-align:left;font-weight:600;min-width:68px}
+.ci-pct{width:44px}
+.ci-num{width:34px}
+.row-del{background:none;border:none;color:var(--hint);cursor:pointer;font-size:13px;padding:2px 5px;border-radius:4px}
+.row-del:hover{color:#993C1D;background:#FAECE7}
+
+/* CHIPS */
+.chip{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;margin:1px;white-space:nowrap}
+.cg{background:var(--navy);color:var(--gold)}
+.cm{background:#1A4A7A;color:#fff}
+.cs{background:#6B1A1A;color:#fff}
+.cy{background:#0A4A30;color:#fff}
+.cwind{background:#D4F0E7;color:#0A4A30}
+.cfire{background:#FAE0D4;color:#7A2010}
+.cwater{background:#D8EAF8;color:#0A3A6A}
+.cearth{background:#FAE8C8;color:#6A3A08}
+
+/* CARD GRID */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.pc{background:#fff;border:1.5px solid var(--bd);border-radius:var(--rl);padding:.9rem;cursor:pointer;position:relative;transition:box-shadow .15s}
+.pc:hover{box-shadow:0 4px 14px rgba(0,0,0,.1)}
+.pc.sel{border-color:var(--gold);box-shadow:0 0 0 2.5px rgba(201,168,76,.25)}
+.pc-dot{position:absolute;top:9px;right:9px;width:20px;height:20px;border-radius:50%;border:2px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;background:#fff}
+.pc.sel .pc-dot{background:var(--gold);border-color:var(--gold);color:var(--navy);font-weight:700}
+.pc-hdr{display:flex;align-items:center;gap:8px;margin-bottom:.65rem}
+.pc-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.pc-name{font-size:13px;font-weight:700}
+.pc-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.bar-row{display:flex;align-items:center;gap:4px;margin:2px 0}
+.barlbl{font-size:10px;width:20px;color:var(--muted)}
+.bartr{flex:1;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.barfi{height:100%;border-radius:3px}
+.barvl{font-size:10px;width:26px;text-align:right;color:var(--muted)}
+.pc-chips{display:flex;flex-wrap:wrap;gap:2px;margin-top:6px}
+
+/* REPORT */
+.gen-bar{background:#fff;border:1px solid var(--bd);border-radius:var(--rl);padding:.9rem;margin-bottom:1rem;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.gb-g{flex:1;min-width:160px}
+.gb-g label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px}
+.gb-g input,.gb-g select{width:100%;padding:7px 8px;border:1.5px solid var(--bd2);border-radius:6px;font-size:12px;font-family:inherit}
+.gb-g input:focus,.gb-g select:focus{outline:none;border-color:var(--navy)}
+.sel-st{font-size:12px;color:var(--muted);align-self:center}
+.sel-st strong{color:var(--navy)}
+
+.rpt-shell{background:#fff;border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden}
+.rpt-hdr{background:var(--navy);padding:1.25rem 1.5rem}
+.rpt-title{color:var(--gold);font-size:16px;font-weight:700;margin-bottom:3px}
+.rpt-sub{color:rgba(255,255,255,.5);font-size:12px}
+.rpt-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:.75rem}
+.rpt-chip{background:rgba(255,255,255,.08);border:1px solid rgba(201,168,76,.3);border-radius:20px;padding:3px 11px;font-size:11px;color:#fff}
+.rpt-body{padding:1.25rem}
+.r-sec{margin-bottom:1.5rem}
+.r-sec:last-child{margin-bottom:0}
+.r-sec-hdr{display:flex;align-items:center;gap:7px;padding-bottom:.4rem;border-bottom:2.5px solid var(--gold);margin-bottom:.75rem}
+.r-ico{width:22px;height:22px;border-radius:5px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0}
+.r-sec-title{font-size:13px;font-weight:700}
+.r-blk{background:var(--surface2);border-radius:var(--r);padding:.9rem;margin-bottom:7px}
+.r-content{font-size:13px;color:var(--text);line-height:1.9;white-space:pre-wrap}
+.r-blk-ft{display:flex;justify-content:flex-end;margin-top:6px}
+.edit-btn{background:none;border:1px solid var(--bd2);border-radius:5px;padding:3px 9px;font-size:11px;cursor:pointer;color:var(--muted);font-family:inherit}
+.edit-btn:hover{border-color:var(--navy);color:var(--navy)}
+.edit-ta{width:100%;min-height:110px;padding:8px;border:1.5px solid var(--bd2);border-radius:7px;font-size:13px;line-height:1.8;resize:vertical;font-family:inherit}
+.save-ebtn{background:var(--navy);color:#fff;border:none;padding:5px 11px;border-radius:5px;font-size:11px;cursor:pointer;margin-top:4px;font-family:inherit}
+.ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px;margin-bottom:1rem}
+.ov-card{background:var(--surface2);border-radius:var(--r);padding:.8rem;border-left:3px solid var(--gold)}
+.ov-hdr{display:flex;align-items:center;gap:7px;margin-bottom:.5rem}
+.ov-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.ov-name{font-size:13px;font-weight:700}
+
+/* MISC */
+.loading{text-align:center;padding:2.5rem;color:var(--muted)}
+.spin{width:28px;height:28px;border:3px solid var(--bd2);border-top-color:var(--navy);border-radius:50%;animation:sp .7s linear infinite;margin:0 auto .75rem}
+@keyframes sp{to{transform:rotate(360deg)}}
+.err{background:#FAE8E8;border:1px solid #F0A0A0;border-radius:var(--r);padding:.9rem;color:#7A1A1A;font-size:13px;line-height:1.7;margin:.75rem}
+.act-row{display:flex;gap:7px;margin-top:.75rem;flex-wrap:wrap}
+.act-row .btn{flex:1}
+.sv-toast{position:fixed;bottom:1rem;right:1rem;background:var(--navy);color:#fff;padding:7px 15px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999}
+.sv-toast.show{opacity:1}
+.hint{font-size:11px;color:var(--hint);margin-top:4px}
+
+/* CSV TEMPLATE */
+.csv-info{background:#F0F8FF;border:1px solid #B0D4F0;border-radius:var(--r);padding:.75rem 1rem;margin-bottom:.75rem;font-size:12px;color:#1A3A5A;line-height:1.7}
+.csv-info code{background:#E0EEF8;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px}
+
+/* ── PRINT & PDF ── */
+@media print{
+  .topbar,.tab-bar,.folder-bar,.gen-bar,.act-row,.edit-btn,.r-blk-ft,
+  .btn-row,.sec-hdr .btn-row,#no-print{display:none!important}
+  body{background:#fff!important;font-size:12pt;color:#000!important}
+  .rpt-shell{border:1px solid #333!important;box-shadow:none!important}
+  /* Print-safe header: dark bg with forced color */
+  .rpt-hdr{background:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .rpt-title{color:#FFD700!important}
+  .rpt-sub{color:#CCC!important}
+  .rpt-chip{border:1px solid #888!important;color:#FFF!important}
+  /* Energy chips: replace color with border+bold for B&W legibility */
+  .chip.cwind,.chip.cfire,.chip.cwater,.chip.cearth{background:#fff!important;border:1.5px solid #333!important;color:#000!important}
+  .chip.cg,.chip.cm,.chip.cs,.chip.cy{background:#000!important;color:#FFF!important;border:none!important}
+  .r-blk{background:#F5F5F5!important;border:1px solid #CCC}
+  .ov-card{background:#F5F5F5!important;border-left:3px solid #333!important}
+  .r-sec-hdr{border-bottom:2px solid #333!important}
+  .r-ico{background:#000!important;color:#FFD700!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  /* Energy bars: solid black */
+  .barfi{background:#333!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .bartr{background:#DDD!important}
+  .pc-av,.ov-av{background:#E0E0E0!important;color:#000!important}
+  a{text-decoration:none;color:#000}
+  .r-content{font-size:11pt;line-height:1.8}
+  .rpt-body{padding:.75rem}
+  .r-sec{margin-bottom:1rem;page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<!-- GATE -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="g-logo">
+      <div class="g-icon"><svg width="26" height="26" viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="10" stroke="#C9A84C" stroke-width="1.5"/><path d="M8 13L13 8L18 13L13 18Z" stroke="#C9A84C" stroke-width="1.2" fill="none"/><circle cx="13" cy="13" r="2.5" fill="#C9A84C"/></svg></div>
+      <div><div class="g-title">MMT 天賦資料庫</div><div class="g-sub">Mercury Mental Thinking</div></div>
+    </div>
+    <p class="g-desc">請輸入 Anthropic API Key 開始使用。<br>Key 僅存於瀏覽器記憶體，不會上傳至任何伺服器。</p>
+    <label class="g-lbl">Anthropic API Key</label>
+    <input type="password" class="g-inp" id="key-input" placeholder="sk-ant-api03-...">
+    <button class="g-btn" onclick="startApp()">進入工具</button>
+    <p class="g-note">還沒有 Key？<a href="https://console.anthropic.com/settings/keys" target="_blank">前往申請</a></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="tb-l">
+      <div class="tb-icon"><svg width="16" height="16" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="9" stroke="#C9A84C" stroke-width="1.3"/><path d="M7 11L11 7L15 11L11 15Z" stroke="#C9A84C" stroke-width="1.1" fill="none"/><circle cx="11" cy="11" r="2.2" fill="#C9A84C"/></svg></div>
+      <div><div class="tb-title">MMT 天賦資料庫</div><div class="tb-sub">Mercury Mental Thinking</div></div>
+    </div>
+    <div class="tb-r" id="no-print">
+      <div class="fz-bar">
+        <label>字體</label>
+        <input type="range" min="12" max="18" value="14" id="fz-slider" oninput="setFz(this.value)" title="調整字體大小">
+        <label id="fz-val">14px</label>
+      </div>
+      <div class="pill" onclick="changeKey()">🔑 API Key</div>
+    </div>
+  </div>
+
+  <div class="tab-bar" id="no-print">
+    <button class="tab-btn on" id="tab-db" onclick="sw('db')">📋 資料輸入</button>
+    <button class="tab-btn" id="tab-cards" onclick="sw('cards')">🃏 天賦卡片</button>
+    <button class="tab-btn" id="tab-report" onclick="sw('report')">📄 合盤報告</button>
+  </div>
+
+  <!-- ── 資料輸入 ── -->
+  <div id="pane-db" class="container">
+    <!-- Folder bar -->
+    <div class="folder-bar" id="no-print">
+      <span class="folder-label">📁 個案庫：</span>
+      <div id="folder-tabs"></div>
+      <button class="folder-add" onclick="addFolder()">＋ 新增資料庫</button>
+      <button class="btn btn-red" style="font-size:11px;padding:4px 10px" onclick="deleteFolder()">刪除目前庫</button>
+    </div>
+
+    <div class="sec-hdr" id="no-print">
+      <div class="sec-title" id="db-title">載入中…</div>
+      <div class="btn-row">
+        <button class="btn btn-green" onclick="document.getElementById('csv-file').click()">📥 匯入 CSV/Excel</button>
+        <input type="file" id="csv-file" accept=".csv,.xlsx,.xls" style="display:none" onchange="importFile(this)">
+        <button class="btn btn-out" onclick="exportCSV()">📤 匯出 CSV</button>
+        <button class="btn btn-out" onclick="addRow()">＋ 新增成員</button>
+        <button class="btn btn-navy" onclick="saveData()">💾 儲存</button>
+      </div>
+    </div>
+
+    <div class="csv-info" id="no-print">
+      <strong>CSV 格式說明（第一列為標題，可直接從 Excel 匯入）：</strong><br>
+      欄位順序：<code>姓名, 風, 火, 水, 土, 年策目前, 年策生日後, 天賦1, 天賦2, 天賦3, 天賦4, 天賦5, 天賦6, 天賦7, 導師1, 導師2, 導師3, 陰影1, 陰影2</code><br>
+      空白欄位留空即可。<button class="btn btn-out" style="font-size:11px;padding:3px 9px;margin-left:8px" onclick="downloadTemplate()">下載範本 CSV</button>
+    </div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th class="thl" rowspan="2" style="min-width:76px">姓名</th>
+              <th colspan="4">四大能量（%）</th>
+              <th colspan="2">年度策略</th>
+              <th colspan="7">天賦牌（0–21，最多7張）</th>
+              <th colspan="3">導師牌（最多3張）</th>
+              <th colspan="2">陰影牌（最多2張）</th>
+              <th rowspan="2" style="width:28px" id="no-print"></th>
+            </tr>
+            <tr class="sub">
+              <th style="color:#6EE7B7">風</th><th style="color:#FCA5A5">火</th><th style="color:#93C5FD">水</th><th style="color:#FCD34D">土</th>
+              <th>目前</th><th>生日後</th>
+              <th>①</th><th>②</th><th>③</th><th>④</th><th>⑤</th><th>⑥</th><th>⑦</th>
+              <th>導①</th><th>導②</th><th>導③</th>
+              <th>影①</th><th>影②</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="hint" id="no-print">💡 資料每 1 秒自動儲存。支援 CSV/Excel 批次匯入（500 筆以上亦可）。</div>
+  </div>
+
+  <!-- ── 天賦卡片 ── -->
+  <div id="pane-cards" class="container" style="display:none">
+    <div class="folder-bar" id="no-print">
+      <span class="folder-label">📁 個案庫：</span>
+      <div id="folder-tabs-c"></div>
+    </div>
+    <div class="sec-hdr" id="no-print">
+      <div class="sec-title">天賦卡片 — 點選成員加入合盤</div>
+      <div class="btn-row">
+        <span class="sel-st">已選 <strong id="sel-num">0</strong> 人</span>
+        <button class="btn btn-out" onclick="clearSel()">取消全選</button>
+        <button class="btn btn-gold" onclick="goReport()">生成合盤報告 →</button>
+      </div>
+    </div>
+    <div class="card-grid" id="card-grid"></div>
+  </div>
+
+  <!-- ── 合盤報告 ── -->
+  <div id="pane-report" class="container" style="display:none">
+    <div class="gen-bar" id="no-print">
+      <div class="gb-g"><label>情境名稱</label><input type="text" id="ctx-name" placeholder="例：業務三人組、2026核心團隊"></div>
+      <div class="gb-g"><label>分析目的</label>
+        <select id="ctx-purpose">
+          <option>商業團隊協作</option><option>職場分工建議</option><option>合夥人評估</option>
+          <option>人際關係解析</option><option>親子/家庭關係</option><option>情感關係分析</option>
+        </select>
+      </div>
+      <div class="gb-g" style="min-width:120px"><label>已選成員</label><div id="gen-chips" style="display:flex;flex-wrap:wrap;gap:3px;min-height:30px;align-items:center"></div></div>
+      <button class="btn btn-gold" onclick="generateReport()">✦ AI 生成報告</button>
+    </div>
+    <div id="report-area"><div style="text-align:center;padding:2.5rem;color:var(--muted);font-size:13px">請先在「天賦卡片」頁選取 2–6 人，再點「生成合盤報告」。</div></div>
+    <div class="act-row" id="rpt-act" style="display:none" id="no-print">
+      <button class="btn btn-out" onclick="sw('cards')">← 重新選人</button>
+      <button class="btn btn-out" onclick="generateReport()">↺ 重新生成</button>
+      <button class="btn btn-out" onclick="printReport()">🖨 列印（可存PDF）</button>
+      <button class="btn btn-navy" onclick="downloadPDF()">⬇ 下載 PDF 檔</button>
+    </div>
+  </div>
+</div>
+
+<div class="sv-toast" id="sv-toast">✓ 已自動儲存</div>
+
+<script>
+// ── CONSTANTS ──
+const CN={0:"創意家",1:"整合者",2:"敏銳者",3:"美學家",4:"挑戰者",5:"傳教者",6:"演繹家",7:"守護者",8:"啟導者",9:"穿透者",10:"顯化者",11:"權威者",12:"趨勢家",13:"改革者",14:"使命家",15:"策略家",16:"執行者",17:"理想家",18:"感知者",19:"光之子",20:"計畫者",21:"建構者"};
+const CE={0:"wind",1:"wind",2:"water",3:"water",4:"fire",5:"earth",6:"wind",7:"water",8:"fire",9:"earth",10:"earth",11:"wind",12:"water",13:"water",14:"fire",15:"water",16:"fire",17:"wind",18:"water",19:"fire",20:"wind",21:"earth"};
+const EC={wind:"#1D9E75",fire:"#D85A30",water:"#3B8BDB",earth:"#BA7517"};
+const EN={wind:"風",fire:"火",water:"水",earth:"土"};
+const ENAME={wind:"風能量",fire:"火能量",water:"水能量",earth:"土能量"};
+const CDESC={0:"創新靈感、突破框架",1:"知識整合橋樑",2:"高度敏銳深度連結",3:"美感號召打造形象",4:"衝鋒領導推動突破",5:"說服傳遞價值",6:"人緣信任媒合人際",7:"細膩守護維護秩序",8:"啟發激勵超越設限",9:"洞察核心品質管控",10:"顯化落地轉為資源",11:"優雅權威品味專業",12:"趨勢敏銳創造舞台",13:"深度革新顛覆變革",14:"故事引領使命啟發",15:"策略縝密風險嗅覺",16:"執行到位業績落實",17:"理想主義媒合橋樑",18:"直覺深邃連結人心",19:"光芒四射領袖魅力",20:"精準計劃責任守衛",21:"結構建立穩定傳承"};
+
+let API_KEY="";
+// STORE: { folders:[{id,name}], current_folder_id, data:{folder_id:[members]} }
+let STORE={folders:[{id:"default",name:"預設庫"}],current:"default",data:{default:[]}};
+let SEL=new Set();
+let autoSaveTimer=null;
+
+function emptyM(){return{name:"",wind:"",fire:"",water:"",earth:"",ys_cur:"",ys_next:"",gifts:["","","","","","",""],mentors:["","",""],shadows:["",""]};}
+function curDB(){return STORE.data[STORE.current]||(STORE.data[STORE.current]=[]);}
+function domE(m){const v={wind:+m.wind||0,fire:+m.fire||0,water:+m.water||0,earth:+m.earth||0};return Object.keys(v).reduce((a,b)=>v[a]>v[b]?a:b);}
+function gifts(m){return[...new Set((m.gifts||[]).filter(g=>g!=="").map(g=>+g))];}
+function mentors(m){return[...new Set((m.mentors||[m.mentor||""]).filter(g=>g!=="").map(g=>+g))];}
+function shadows(m){return[...new Set((m.shadows||[m.shadow||""]).filter(g=>g!=="").map(g=>+g))];}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+// ── STORAGE ──
+function saveData(silent){
+  localStorage.setItem("mmt_store_v3",JSON.stringify(STORE));
+  if(!silent){const t=document.getElementById("sv-toast");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800);}
+}
+function loadData(){
+  try{const r=localStorage.getItem("mmt_store_v3");if(r)STORE=JSON.parse(r);}catch(e){}
+  if(!STORE.folders?.length)STORE.folders=[{id:"default",name:"預設庫"}];
+  if(!STORE.current)STORE.current="default";
+  if(!STORE.data)STORE.data={};
+  STORE.folders.forEach(f=>{if(!STORE.data[f.id])STORE.data[f.id]=[];});
+  if(!curDB().length){curDB().push(emptyM(),emptyM(),emptyM());}
+}
+function debounceSave(){
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer=setTimeout(()=>{saveData(true);},1000);
+}
+
+// ── GATE ──
+function startApp(){
+  const k=document.getElementById("key-input").value.trim();
+  if(!k.startsWith("sk-ant-")){alert("請輸入有效的 API Key（以 sk-ant- 開頭）");return;}
+  API_KEY=k;
+  document.getElementById("gate").style.display="none";
+  document.getElementById("app").style.display="block";
+  loadData();
+  renderFolders();renderTable();
+}
+function changeKey(){if(confirm("確定更換 API Key？")){document.getElementById("key-input").value="";document.getElementById("gate").style.display="flex";document.getElementById("app").style.display="none";API_KEY="";}}
+document.addEventListener("DOMContentLoaded",()=>{document.getElementById("key-input").addEventListener("keydown",e=>{if(e.key==="Enter")startApp();});});
+
+// ── FONT SIZE ──
+function setFz(v){document.documentElement.style.setProperty("--fz",v+"px");document.getElementById("fz-val").textContent=v+"px";}
+
+// ── FOLDERS ──
+function renderFolders(){
+  const cur=STORE.current;
+  const html=STORE.folders.map(f=>`<button class="folder-tab ${f.id===cur?"on":""}" onclick="switchFolder('${f.id}')">${esc(f.name)}</button>`).join("");
+  ["folder-tabs","folder-tabs-c"].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=html;});
+  document.getElementById("db-title").textContent=(STORE.folders.find(f=>f.id===cur)?.name||"未命名")+" 資料庫";
+}
+function switchFolder(id){
+  STORE.current=id;SEL.clear();saveData(true);
+  renderFolders();renderTable();renderCards();
+}
+function addFolder(){
+  const name=prompt("新個案庫名稱：（例：A公司團隊、B家庭）");
+  if(!name)return;
+  const id="f_"+Date.now();
+  STORE.folders.push({id,name});
+  STORE.data[id]=[emptyM(),emptyM()];
+  STORE.current=id;SEL.clear();
+  saveData();renderFolders();renderTable();renderCards();
+}
+function deleteFolder(){
+  if(STORE.folders.length<=1){alert("至少保留一個個案庫");return;}
+  if(!confirm(`確定刪除「${STORE.folders.find(f=>f.id===STORE.current)?.name}」及其所有資料？`))return;
+  STORE.folders=STORE.folders.filter(f=>f.id!==STORE.current);
+  delete STORE.data[STORE.current];
+  STORE.current=STORE.folders[0].id;SEL.clear();
+  saveData();renderFolders();renderTable();renderCards();
+}
+
+// ── TABLE ──
+function renderTable(){
+  const db=curDB();
+  const tb=document.getElementById("tbl-body");
+  tb.innerHTML="";
+  db.forEach((m,i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td class="tdl"><input class="ci ci-name" value="${esc(m.name)}" placeholder="姓名" oninput="curDB()[${i}].name=this.value;debounceSave()"></td>
+      <td><input class="ci ci-pct" type="number" min="0" max="100" value="${m.wind}" placeholder="0" oninput="curDB()[${i}].wind=this.value;debounceSave()"></td>
+      <td><input class="ci ci-pct" type="number" min="0" max="100" value="${m.fire}" placeholder="0" oninput="curDB()[${i}].fire=this.value;debounceSave()"></td>
+      <td><input class="ci ci-pct" type="number" min="0" max="100" value="${m.water}" placeholder="0" oninput="curDB()[${i}].water=this.value;debounceSave()"></td>
+      <td><input class="ci ci-pct" type="number" min="0" max="100" value="${m.earth}" placeholder="0" oninput="curDB()[${i}].earth=this.value;debounceSave()"></td>
+      <td><input class="ci ci-num" type="number" min="0" max="21" value="${m.ys_cur}" placeholder="—" oninput="curDB()[${i}].ys_cur=this.value;debounceSave()"></td>
+      <td><input class="ci ci-num" type="number" min="0" max="21" value="${m.ys_next}" placeholder="—" oninput="curDB()[${i}].ys_next=this.value;debounceSave()"></td>
+      ${[0,1,2,3,4,5,6].map(j=>`<td><input class="ci ci-num" type="number" min="0" max="21" value="${(m.gifts||[])[j]||""}" placeholder="—" oninput="if(!curDB()[${i}].gifts)curDB()[${i}].gifts=['','','','','','',''];curDB()[${i}].gifts[${j}]=this.value;debounceSave()"></td>`).join("")}
+      ${[0,1,2].map(j=>`<td><input class="ci ci-num" type="number" min="0" max="21" value="${(m.mentors||[])[j]||""}" placeholder="—" oninput="if(!curDB()[${i}].mentors)curDB()[${i}].mentors=['','',''];curDB()[${i}].mentors[${j}]=this.value;debounceSave()"></td>`).join("")}
+      ${[0,1].map(j=>`<td><input class="ci ci-num" type="number" min="0" max="21" value="${(m.shadows||[])[j]||""}" placeholder="—" oninput="if(!curDB()[${i}].shadows)curDB()[${i}].shadows=['',''];curDB()[${i}].shadows[${j}]=this.value;debounceSave()"></td>`).join("")}
+      <td><button class="row-del" onclick="delRow(${i})">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+function addRow(){curDB().push(emptyM());renderTable();}
+function delRow(i){if(!confirm(`刪除「${curDB()[i].name||"此成員"}」？`))return;curDB().splice(i,1);SEL=new Set([...SEL].filter(x=>x!==i).map(x=>x>i?x-1:x));saveData();renderTable();renderCards();}
+
+// ── CSV IMPORT/EXPORT ──
+function importFile(inp){
+  const file=inp.files[0];if(!file)return;
+  const ext=file.name.split(".").pop().toLowerCase();
+  if(ext==="csv"){
+    const reader=new FileReader();
+    reader.onload=e=>parseCSV(e.target.result);
+    reader.readAsText(file,"UTF-8");
+  } else {
+    alert("請上傳 .csv 檔案。如為 Excel，請先在 Excel 另存為 CSV（UTF-8）格式。");
+  }
+  inp.value="";
+}
+function parseCSV(text){
+  const lines=text.trim().split("\n").filter(l=>l.trim());
+  if(lines.length<2){alert("CSV 格式錯誤或無資料");return;}
+  const rows=lines.slice(1); // skip header
+  let count=0;
+  rows.forEach(line=>{
+    const cols=line.split(",").map(c=>c.trim().replace(/^"|"$/g,""));
+    if(!cols[0])return;
+    const m=emptyM();
+    m.name=cols[0]||"";
+    m.wind=cols[1]||"";m.fire=cols[2]||"";m.water=cols[3]||"";m.earth=cols[4]||"";
+    m.ys_cur=cols[5]||"";m.ys_next=cols[6]||"";
+    m.gifts=[cols[7]||"",cols[8]||"",cols[9]||"",cols[10]||"",cols[11]||"",cols[12]||"",cols[13]||""];
+    m.mentors=[cols[14]||"",cols[15]||"",cols[16]||""];
+    m.shadows=[cols[17]||"",cols[18]||""];
+    curDB().push(m);count++;
+  });
+  saveData();renderTable();renderCards();
+  alert(`✅ 成功匯入 ${count} 筆資料（已加入目前個案庫底部）`);
+}
+function exportCSV(){
+  const db=curDB();
+  const header="姓名,風,火,水,土,年策目前,年策生日後,天賦1,天賦2,天賦3,天賦4,天賦5,天賦6,天賦7,導師1,導師2,導師3,陰影1,陰影2";
+  const rows=db.map(m=>[m.name,m.wind,m.fire,m.water,m.earth,m.ys_cur,m.ys_next,...(m.gifts||[]).slice(0,7),...(m.mentors||[]).slice(0,3),...(m.shadows||[]).slice(0,2)].map(v=>`"${v}"`).join(","));
+  const csv="\uFEFF"+header+"\n"+rows.join("\n"); // BOM for Excel UTF-8
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download=`MMT_${STORE.folders.find(f=>f.id===STORE.current)?.name||"資料"}_${new Date().toLocaleDateString("zh-TW").replace(/\//g,"-")}.csv`;
+  a.click();
+}
+function downloadTemplate(){
+  const header="姓名,風,火,水,土,年策目前,年策生日後,天賦1,天賦2,天賦3,天賦4,天賦5,天賦6,天賦7,導師1,導師2,導師3,陰影1,陰影2";
+  const sample=`林伯彥,12.5,12.5,50,25,15,16,3,7,7,8,9,21,,,2,,11,,20\n洪緒詮,28.6,28.6,14.3,28.6,14,15,0,5,16,18,20,21,,4,,,13,0`;
+  const csv="\uFEFF"+header+"\n"+sample;
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="MMT範本.csv";a.click();
+}
+
+// ── CARDS ──
+function renderCards(){
+  const db=curDB();
+  const grid=document.getElementById("card-grid");
+  grid.innerHTML="";
+  db.forEach((m,i)=>{
+    if(!m.name)return;
+    const de=domE(m);const col=EC[de];
+    const gs=gifts(m);const ms=mentors(m);const ss=shadows(m);
+    const tot=(+m.wind||0)+(+m.fire||0)+(+m.water||0)+(+m.earth||0)||100;
+    const card=document.createElement("div");
+    card.className="pc"+(SEL.has(i)?" sel":"");
+    card.innerHTML=`
+      <div class="pc-dot">✓</div>
+      <div class="pc-hdr">
+        <div class="pc-av" style="background:${col}22;color:${col}">${m.name.slice(0,2)}</div>
+        <div><div class="pc-name">${esc(m.name)} <span class="chip c${de}">${ENAME[de]}</span></div>
+        <div class="pc-sub">天賦 ${gs.map(n=>`${n}·${CN[n]||""}`).join(" / ")||"未填"}</div></div>
+      </div>
+      <div>${["wind","fire","water","earth"].map(e=>`<div class="bar-row"><div class="barlbl" style="color:${EC[e]}">${EN[e]}</div><div class="bartr"><div class="barfi" style="width:${(+m[e]||0)/tot*100}%;background:${EC[e]}"></div></div><div class="barvl">${m[e]||0}%</div></div>`).join("")}</div>
+      <div class="pc-chips">
+        ${gs.map(n=>`<span class="chip cg">${n} ${CN[n]||""}</span>`).join("")}
+        ${ms.map(n=>`<span class="chip cm">${n} ${CN[n]||""}</span>`).join("")}
+        ${ss.map(n=>`<span class="chip cs">${n} ${CN[n]||""}</span>`).join("")}
+        ${m.ys_cur!==""?`<span class="chip cy">年策${m.ys_cur} ${CN[+m.ys_cur]||""}</span>`:""}
+      </div>`;
+    card.onclick=()=>toggleSel(i);
+    grid.appendChild(card);
+  });
+  document.getElementById("sel-num").textContent=SEL.size;
+}
+function toggleSel(i){
+  if(SEL.has(i)){SEL.delete(i);}else{if(SEL.size>=6){alert("最多選擇 6 人");return;}SEL.add(i);}
+  renderCards();updateGenChips();
+}
+function clearSel(){SEL.clear();renderCards();updateGenChips();}
+function updateGenChips(){
+  const el=document.getElementById("gen-chips");if(!el)return;
+  el.innerHTML=[...SEL].map(i=>{const m=curDB()[i];if(!m)return"";const de=domE(m);return`<span class="chip c${de}">${esc(m.name)}</span>`;}).join("");
+}
+function goReport(){if(SEL.size<2){alert("請至少選擇 2 位成員");return;}sw("report");updateGenChips();}
+
+// ── TABS ──
+function sw(name){
+  ["db","cards","report"].forEach(t=>{
+    document.getElementById("pane-"+t).style.display=t===name?"block":"none";
+    document.getElementById("tab-"+t).classList.toggle("on",t===name);
+  });
+  if(name==="cards"){renderFolders();renderCards();}
+  if(name==="report")updateGenChips();
+}
+
+// ── GENERATE ──
+async function generateReport(){
+  const db=curDB();
+  const sel=[...SEL].map(i=>db[i]).filter(m=>m&&m.name);
+  if(sel.length<2){alert("請先在「天賦卡片」頁選取 2–6 人");return;}
+  if(!API_KEY){alert("請先設定 API Key");return;}
+  document.getElementById("rpt-act").style.display="none";
+  document.getElementById("report-area").innerHTML=`<div class="loading"><div class="spin"></div>AI 正在分析天賦合盤…<br><span style="font-size:11px;opacity:.5;display:block;margin-top:4px">約需 15–25 秒</span></div>`;
+  const ctx=document.getElementById("ctx-name").value.trim()||"團隊合盤";
+  const purpose=document.getElementById("ctx-purpose").value;
+  const summaries=sel.map(m=>{
+    const gs=gifts(m);const ms=mentors(m);const ss=shadows(m);const de=domE(m);
+    return`【${m.name}】\n- 主能量：${ENAME[de]}（風${m.wind||0}% 火${m.fire||0}% 水${m.water||0}% 土${m.earth||0}%）\n- 天賦牌：${gs.map(n=>`${n}號${CN[n]||""}`).join("、")||"未填"}\n- 導師牌：${ms.length?ms.map(n=>`${n}號${CN[n]||""}`).join("、"):"無"}\n- 陰影牌：${ss.length?ss.map(n=>`${n}號${CN[n]||""}`).join("、"):"無"}\n- 年度策略：${m.ys_cur!==""?`目前${m.ys_cur}號${CN[+m.ys_cur]||""}`:""}${m.ys_next!==""?`、生日後${m.ys_next}號${CN[+m.ys_next]||""}`:""}`;
+  }).join("\n\n");
+  const system=`你是專業的 MMT 商業發展策略顧問，精通 Mercury Mental Thinking 天賦系統（整合畢達哥拉斯數字學、西方數據文學與榮格心理學）。四大能量：風（顧問型，邏輯/知識/創新）、水（滲透型，關係/情感/凝聚）、火（競爭型，行動/執行/業績）、土（落實型，結構/財務/穩定）。請使用「行為科學」「心智模型」「能量特質」，禁止「占星」「玄學」。繁體中文，語氣專業有洞察力。`;
+  const prompt=`分析情境：「${ctx}」，目的：${purpose}，共 ${sel.length} 人。\n\n${summaries}\n\n請生成完整 MMT 合盤分析報告，嚴格按以下六區塊輸出，每區塊標題用【】包住：\n\n【個人天賦與職場定位分析】\n每位成員各一段（用姓名當小標），包含：核心天賦優勢2–3點、導師牌卡點1點、陰影牌覺察1點、最適職場定位。\n\n【團隊能量合盤（Synastry）】\n整體能量優勢、潛在缺口、成員互補關係。\n\n【最強互為動力機制】\n關鍵天賦互補對、飛輪效應、具體協作方式。\n\n【執行力與分工建議】\n五大核心功能（產品/銷售/人才/研發/財務）具體分工，指名誰負責。\n\n【溝通策略（理解代替忍耐）】\n每位成員底層需求及具體溝通建議。\n\n【年度策略提點】\n每人當前年度策略牌的行動建議（1–2句）。`;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:3500,system,messages:[{role:"user",content:prompt}]})});
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${res.status}`);}
+    const data=await res.json();
+    const text=data.content?.map(c=>c.text||"").join("")||"";
+    if(!text)throw new Error("AI 回應為空");
+    renderReport(sel,ctx,purpose,text);
+  }catch(err){
+    document.getElementById("report-area").innerHTML=`<div class="err"><strong>生成失敗</strong><br>${esc(err.message)}<br>請確認 API Key 正確且帳戶有餘額。</div>`;
+  }
+}
+
+function renderReport(sel,ctx,purpose,text){
+  const chips=sel.map(m=>{const de=domE(m);return`<div class="rpt-chip"><span style="color:${EC[de]}">${ENAME[de]}</span> ${esc(m.name)}</div>`;}).join("");
+  const ovCards=sel.map(m=>{
+    const de=domE(m);const col=EC[de];
+    const gs=gifts(m);const ms=mentors(m);const ss=shadows(m);
+    const tot=(+m.wind||0)+(+m.fire||0)+(+m.water||0)+(+m.earth||0)||100;
+    const bars=["wind","fire","water","earth"].map(e=>`<div class="bar-row"><div class="barlbl" style="color:${EC[e]}">${EN[e]}</div><div class="bartr"><div class="barfi" style="width:${(+m[e]||0)/tot*100}%;background:${EC[e]}"></div></div><div class="barvl">${m[e]||0}%</div></div>`).join("");
+    return`<div class="ov-card"><div class="ov-hdr"><div class="ov-av" style="background:${col}22;color:${col}">${m.name.slice(0,2)}</div><div><div class="ov-name">${esc(m.name)} <span class="chip c${de}">${ENAME[de]}</span></div></div></div>${bars}<div class="pc-chips">${gs.map(n=>`<span class="chip cg">${n} ${CN[n]||""}</span>`).join("")}${ms.map(n=>`<span class="chip cm">${n} ${CN[n]||""}</span>`).join("")}${ss.map(n=>`<span class="chip cs">${n} ${CN[n]||""}</span>`).join("")}${m.ys_cur!==""?`<span class="chip cy">年策${m.ys_cur}</span>`:""}</div></div>`;
+  }).join("");
+  const secs=[{k:"個人天賦與職場定位分析",i:"◉",t:"個人天賦與職場定位分析"},{k:"團隊能量合盤",i:"⬡",t:"團隊能量合盤（Synastry）"},{k:"最強互為動力機制",i:"⚡",t:"最強互為動力機制"},{k:"執行力與分工建議",i:"◈",t:"執行力與分工建議"},{k:"溝通策略",i:"◎",t:"溝通策略（理解代替忍耐）"},{k:"年度策略提點",i:"◷",t:"年度策略提點"}];
+  let secsHTML="";
+  secs.forEach((s,idx)=>{
+    const mm=text.match(new RegExp(`【${s.k}[^】]*】\\s*([\\s\\S]*?)(?=【[^】]+】|$)`,"i"));
+    const content=mm&&mm[1]?mm[1].trim():"";
+    if(!content)return;
+    const id=`rs${idx}`;
+    secsHTML+=`<div class="r-sec"><div class="r-sec-hdr"><div class="r-ico">${s.i}</div><div class="r-sec-title">${s.t}</div></div><div class="r-blk"><div class="r-content" id="${id}">${esc(content)}</div><div class="r-blk-ft" id="no-print"><button class="edit-btn" onclick="toggleEdit('${id}',this)">✏ 編輯</button></div></div></div>`;
+  });
+  if(!secsHTML)secsHTML=`<div class="r-blk"><div class="r-content">${esc(text)}</div></div>`;
+  document.getElementById("report-area").innerHTML=`<div class="rpt-shell" id="print-area"><div class="rpt-hdr"><div class="rpt-title">${esc(ctx)} — 合盤分析報告</div><div class="rpt-sub">分析目的：${purpose} ｜ ${sel.length} 位成員 ｜ ${new Date().toLocaleDateString("zh-TW")}</div><div class="rpt-chips">${chips}</div></div><div class="rpt-body"><div class="r-sec"><div class="r-sec-hdr"><div class="r-ico">◉</div><div class="r-sec-title">成員天賦速覽</div></div><div class="ov-grid">${ovCards}</div></div>${secsHTML}</div></div>`;
+  document.getElementById("rpt-act").style.display="flex";
+}
+
+// ── EDIT ──
+function toggleEdit(id,btn){
+  const el=document.getElementById(id);if(!el)return;
+  if(btn.textContent.includes("編輯")){
+    const orig=el.textContent;
+    el.innerHTML=`<textarea class="edit-ta">${orig}</textarea><br><button class="save-ebtn" onclick="saveEdit('${id}',this)">儲存</button>`;
+    btn.textContent="✕ 取消";
+  }else{const ta=el.querySelector("textarea");if(ta)el.innerHTML=esc(ta.value);btn.textContent="✏ 編輯";}
+}
+function saveEdit(id,btn){
+  const el=document.getElementById(id);const ta=el?.querySelector("textarea");
+  if(!ta||!el)return;el.innerHTML=esc(ta.value);
+  el.parentElement?.querySelector(".edit-btn")&&(el.parentElement.querySelector(".edit-btn").textContent="✏ 編輯");
+}
+
+// ── PRINT / PDF ──
+function printReport(){window.print();}
+
+async function downloadPDF(){
+  const area=document.getElementById("print-area");
+  if(!area){alert("請先生成報告");return;}
+  const btn=event.target;btn.textContent="⏳ 生成中…";btn.disabled=true;
+  try{
+    const canvas=await html2canvas(area,{scale:2,useCORS:true,backgroundColor:"#ffffff",logging:false});
+    const imgData=canvas.toDataURL("image/jpeg",0.92);
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+    const pW=pdf.internal.pageSize.getWidth();
+    const pH=pdf.internal.pageSize.getHeight();
+    const imgW=pW-20;
+    const imgH=(canvas.height/canvas.width)*imgW;
+    let y=10;
+    if(imgH<=pH-20){
+      pdf.addImage(imgData,"JPEG",10,y,imgW,imgH);
+    }else{
+      let remaining=imgH;let srcY=0;
+      while(remaining>0){
+        const pageH=Math.min(remaining,pH-20);
+        const sliceH=Math.floor((pageH/imgH)*canvas.height);
+        const sliceCanvas=document.createElement("canvas");
+        sliceCanvas.width=canvas.width;sliceCanvas.height=sliceH;
+        const ctx=sliceCanvas.getContext("2d");
+        ctx.drawImage(canvas,0,srcY,canvas.width,sliceH,0,0,canvas.width,sliceH);
+        const sliceData=sliceCanvas.toDataURL("image/jpeg",0.92);
+        if(srcY>0)pdf.addPage();
+        pdf.addImage(sliceData,"JPEG",10,10,imgW,pageH);
+        srcY+=sliceH;remaining-=pageH;
+      }
+    }
+    const fname=`MMT_合盤報告_${document.getElementById("ctx-name").value||"未命名"}_${new Date().toLocaleDateString("zh-TW").replace(/\//g,"-")}.pdf`;
+    pdf.save(fname);
+  }catch(e){alert("PDF 生成失敗："+e.message);}
+  btn.textContent="⬇ 下載 PDF 檔";btn.disabled=false;
+}
+</script>
+</body>
+</html>
