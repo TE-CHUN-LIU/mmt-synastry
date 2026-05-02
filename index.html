@@ -1128,23 +1128,67 @@ td.tdl{text-align:left;padding-left:10px}
   #ys-table-wrap td:nth-child(3) span:first-child{width:24px !important;height:24px !important;font-size:11px !important;flex-shrink:0}
   #ys-table-wrap td:nth-child(3) span:last-child{font-size:13px !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important}
 }
-/* 組織戰略佈局手機優化：保留矩陣視覺 + sticky 標題不迷路 */
+/* 組織戰略佈局手機優化：保留矩陣視覺 + sticky 標題不迷路 + 左右滑動引導 */
 @media(max-width:768px){
+  /* 顯示左右滑動提示文字 */
+  .mobile-scroll-hint{display:block !important}
+
+  /* scroll container 右邊加閃爍 → 箭頭暗示可滑 */
+  #biz-snapshot-area{position:relative}
+  #biz-snapshot-area::after{
+    content:"→";
+    position:absolute;
+    top:50%;
+    right:8px;
+    transform:translateY(-50%);
+    width:32px;height:32px;
+    border-radius:50%;
+    background:rgba(255,255,255,.96);
+    box-shadow:0 2px 8px rgba(0,0,0,.18);
+    color:#555;
+    font-size:18px;
+    font-weight:900;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none;
+    z-index:20;
+    animation:swipeHint 1.5s ease-in-out infinite;
+  }
+  @keyframes swipeHint{
+    0%,100%{transform:translateY(-50%) translateX(0);opacity:.55}
+    50%{transform:translateY(-50%) translateX(-8px);opacity:1}
+  }
+
   /* 讓外層容器成為 sticky 的捲動參考框 */
   #biz-grid-wrap{min-width:640px;position:relative}
+
   /* 能量欄（風/水/火/土）黏在左邊 */
   .biz-row-hdr{
     position:sticky !important;
     left:0 !important;
     z-index:5;
-    box-shadow:3px 0 6px rgba(0,0,0,.05);
+    box-shadow:3px 0 6px rgba(0,0,0,.08);
   }
+  /* 各能量列實色背景（覆蓋 inline rgba 半透明，避免 sticky 時內容透出）*/
+  #brh-wind{background:#E5F0EA !important}
+  #brh-water{background:#E0EAF2 !important}
+  #brh-fire{background:#F2E0DC !important}
+  #brh-earth{background:#EFE7D6 !important}
+
   /* 頂部功能標題（產品/銷售/...）黏在上方 */
   .biz-col-hdr{
     position:sticky;
     top:0;
     z-index:4;
   }
+  /* 各功能欄實色背景 */
+  #bch-product{background:#DCE5EE !important}
+  #bch-sales{background:#EEDBD4 !important}
+  #bch-talent{background:#DDE9E2 !important}
+  #bch-rd{background:#E2D8EA !important}
+  #bch-finance{background:#E9DFCB !important}
+
   /* 左上角空白格特殊處理：既黏左又黏上，層級最高 */
   #biz-grid-wrap > div:first-child > div:first-child{
     position:sticky;
