@@ -9809,17 +9809,26 @@ async function downloadAsPDF(){
     const pdfH=pdf.internal.pageSize.getHeight();
     const margin=10;
     const imgW=pdfW-margin*2;
-    const imgH=canvas.height*imgW/canvas.width;
-    const imgData=canvas.toDataURL("image/png");
-    let position=margin;
-    let remaining=imgH;
-    pdf.addImage(imgData,"PNG",margin,position,imgW,imgH);
-    remaining-=(pdfH-margin*2);
-    while(remaining>0){
-      position-=(pdfH-margin*2);
-      pdf.addPage();
-      pdf.addImage(imgData,"PNG",margin,position,imgW,imgH);
-      remaining-=(pdfH-margin*2);
+    const contentH=pdfH-margin*2;          // 每頁實際內容高度（mm）
+    const scale=imgW/canvas.width;          // canvas px → PDF mm
+    const chunkPx=contentH/scale;           // 每頁可放的 source canvas 高度（px）
+
+    let yOffset=0;
+    let isFirstPage=true;
+    while(yOffset<canvas.height){
+      if(!isFirstPage) pdf.addPage();
+      const chunkH=Math.min(chunkPx,canvas.height-yOffset);
+      const chunkCanvas=document.createElement("canvas");
+      chunkCanvas.width=canvas.width;
+      chunkCanvas.height=chunkH;
+      const ctx=chunkCanvas.getContext("2d");
+      ctx.fillStyle="#FFFFFF";
+      ctx.fillRect(0,0,chunkCanvas.width,chunkH);
+      ctx.drawImage(canvas,0,yOffset,canvas.width,chunkH,0,0,canvas.width,chunkH);
+      const chunkData=chunkCanvas.toDataURL("image/png");
+      pdf.addImage(chunkData,"PNG",margin,margin,imgW,chunkH*scale);
+      yOffset+=chunkH;
+      isFirstPage=false;
     }
     pdf.save(_exportFilename("pdf"));
   } catch(e){
