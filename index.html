@@ -3864,7 +3864,7 @@ function renderTable(){
       <td style="text-align:center;font-size:12px;color:#A86010;font-weight:600;background:rgba(168,96,16,.05)">${m.earth!==""&&m.earth!=null?m.earth:"—"}</td>
       ${[0,1,2,3,4,5,6].map(j=>{const v=(m.gifts||[])[j];const c=v!==""&&v!=null&&_comp.has(+v);return`<td class="${j===0?'grp-start':''}" style="text-align:center;font-size:12px;font-weight:${c?'700':'600'};${c?'background:linear-gradient(135deg,rgba(201,168,76,.35),rgba(154,40,40,.22));color:#7A3018':'color:#A8822C;background:rgba(201,168,76,.06)'}" title="${c?'完全牌（2倍能量·輾壓其他天賦）':''}">${v!==""&&v!=null?(c?'⚡':'')+v:"—"}</td>`;}).join("")}
       ${[0,1,2].map(j=>{const v=(m.mentors||[])[j];const c=v!==""&&v!=null&&_comp.has(+v);return`<td class="${j===0?'grp-start':''}" style="text-align:center;font-size:12px;font-weight:${c?'700':'600'};${c?'background:linear-gradient(135deg,rgba(201,168,76,.35),rgba(154,40,40,.22));color:#7A3018':'color:#6B3FA0;background:rgba(107,63,160,.06)'}" title="${c?'完全牌（2倍能量·輾壓其他天賦）':''}">${v!==""&&v!=null?(c?'⚡':'')+v:"—"}</td>`;}).join("")}
-      ${[0,1].map(j=>{const v=(m.shadows||[])[j];return`<td class="${j===0?'grp-start':''}" style="text-align:center;font-size:12px;color:#555;font-weight:600;background:rgba(85,85,85,.06)">${v!==""&&v!=null?v:"—"}</td>`;}).join("")}
+      ${[0,1].map(j=>{const v=(m.shadows||[])[j];return`<td class="${j===0?'grp-start':''}" style="text-align:center;font-size:12px;color:#555;font-weight:600;background:rgba(85,85,85,.06)" title="${isCo?'企業不解讀陰影':''}">${isCo?'—':(v!==""&&v!=null?v:"—")}</td>`;}).join("")}
       <td class="grp-start" style="text-align:center;font-size:12px;color:#1A3A8A;font-weight:600;background:rgba(26,58,138,.05)">${m.ys_cur!==""&&m.ys_cur!=null?m.ys_cur:"—"}</td>
       <td style="text-align:center;font-size:12px;color:#1A3A8A;font-weight:600;background:rgba(26,58,138,.05)">${m.ys_next!==""&&m.ys_next!=null?m.ys_next:"—"}</td>
       <td class="noprint"><button class="rdel" onclick="delRow(${i})">✕</button></td>`;
@@ -4079,7 +4079,7 @@ ${(()=>{
       <div class="pcchips">
 ${g.map(n=>_pcComp.has(n)?_pcChip(n):`<span class="chip cg">${n} ${CN[n]||""}</span>`).join("")}
         ${_pcMts.map(n=>_pcComp.has(n)?_pcChip(n):`<span class="chip cm">${n} ${CN[n]||""}</span>`).join("")}
-        ${ss(m).map(n=>`<span class="chip cs">${n} ${CN[n]||""}</span>`).join("")}
+        ${isCompany(m)?'':ss(m).map(n=>`<span class="chip cs">${n} ${CN[n]||""}</span>`).join("")}
         ${m.ys_cur!==""?`<span class="chip cy">年策 ${m.ys_cur} ${CN[+m.ys_cur]||""}</span>`:""}
       </div>
       <div class="noprint" style="margin-top:7px;padding-top:7px;border-top:1px solid var(--bd);display:flex;align-items:center;gap:5px;flex-wrap:wrap">
@@ -6134,7 +6134,7 @@ async function generateReport(){
     const emax=Math.max(...Object.values(evals));
     const eTops=Object.keys(evals).filter(k=>evals[k]===emax);
     const eChips=eTops.map(k=>`<span class="chip c${k}" style="font-size:11px">${ENAME[k]}</span>`).join(" ");
-    return`<div class="ovcard"><div class="ovhdr"><div class="ovav" style="background:${gAvBg};color:${gAvFg};font-size:20px;font-weight:400">${gSym}</div><div style="min-width:0"><div class="ovname">${esc(m.name)}</div><div style="margin-top:3px;display:flex;gap:4px;flex-wrap:wrap">${eChips}</div></div></div>${bars}<div class="pcchips">${gRaw.map(n=>_compOv.has(n)?_chipComp(n):`<span class="chip cg">${n} ${CN[n]||""}</span>`).join("")}${mRaw.map(n=>_compOv.has(n)?_chipComp(n):`<span class="chip cm">${n} ${CN[n]||""}</span>`).join("")}${sRaw.map(n=>`<span class="chip cs">${n} ${CN[n]||""}</span>`).join("")}${m.ys_cur!==""?`<span class="chip cy">年策 ${m.ys_cur} ${CN[+m.ys_cur]||""}</span>`:""}</div></div>`;
+    return`<div class="ovcard"><div class="ovhdr"><div class="ovav" style="background:${gAvBg};color:${gAvFg};font-size:20px;font-weight:400">${gSym}</div><div style="min-width:0"><div class="ovname">${esc(m.name)}</div><div style="margin-top:3px;display:flex;gap:4px;flex-wrap:wrap">${eChips}</div></div></div>${bars}<div class="pcchips">${gRaw.map(n=>_compOv.has(n)?_chipComp(n):`<span class="chip cg">${n} ${CN[n]||""}</span>`).join("")}${mRaw.map(n=>_compOv.has(n)?_chipComp(n):`<span class="chip cm">${n} ${CN[n]||""}</span>`).join("")}${isCompany(m)?'':sRaw.map(n=>`<span class="chip cs">${n} ${CN[n]||""}</span>`).join("")}${m.ys_cur!==""?`<span class="chip cy">年策 ${m.ys_cur} ${CN[+m.ys_cur]||""}</span>`:""}</div></div>`;
   }).join("");
 
   document.getElementById("rptarea").innerHTML=
