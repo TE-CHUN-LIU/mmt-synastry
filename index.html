@@ -1875,6 +1875,17 @@ td.tdl{text-align:left;padding-left:10px}
               <div id="r-mentor-steps" style="font-size:11px;color:var(--mu);line-height:1.8;font-family:monospace"></div>
             </div>
           </div>
+          <!-- 完全牌（雙倍能量）— 只在天賦+導師有重疊時顯示 -->
+          <div id="r-complete-box" style="display:none;background:linear-gradient(135deg,rgba(232,201,122,0.18),rgba(154,40,40,0.10));border:2px solid #C9A84C;border-radius:var(--rl);padding:1.1rem;grid-column:1/-1">
+            <div style="font-size:11px;font-weight:700;color:#E8C97A;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem">
+              ⚡ 完全牌 — 雙倍能量
+            </div>
+            <div id="r-complete" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.8rem"></div>
+            <div style="font-size:11px;color:var(--mu);line-height:1.7">
+              天賦與導師同時出現此牌號，代表這股能量在你身上是 <b style="color:#E8C97A">2 倍</b> ——
+              特徵更明確、會輾壓其他天賦的優先權。讀盤時要把這張牌當作你最顯著、最優先的主軸來看。
+            </div>
+          </div>
           <!-- 陰影牌 -->
           <div style="background:var(--sf);border:2px solid #7A2A2A;border-radius:var(--rl);padding:1.1rem">
             <div style="font-size:11px;font-weight:700;color:#C06060;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem">陰影牌</div>
@@ -3830,6 +3841,10 @@ function renderTable(){
     const rankOpts=rn.map((n,j)=>`<option value="${j+1}"${!isCo&&+m.rank===j+1?" selected":""}>${n}</option>`).join("");
     const companyOpt=`<option value="company"${isCo?" selected":""}>🏢 公司</option>`;
     const genderOpts=["","M","F"].map(v=>`<option value="${v}"${(m.gender||"")===v?" selected":""}>${v===""?"—":v==="M"?"男":"女"}</option>`).join("");
+    // 完全牌：天賦+導師同號（陰影不計），cell 標 ⚡ + 暖金紅漸層
+    const _gN=(m.gifts||[]).filter(v=>v!==""&&v!=null).map(v=>+v);
+    const _mN=(m.mentors||[]).filter(v=>v!==""&&v!=null).map(v=>+v);
+    const _comp=new Set(_gN.filter(n=>_mN.includes(n)));
     const tr=document.createElement("tr");
     tr.dataset.idx=String(i);
     if(isCo){tr.style.background="linear-gradient(90deg,rgba(30,90,160,.06),rgba(30,90,160,.02))";}
@@ -3847,8 +3862,8 @@ function renderTable(){
       <td style="text-align:center;font-size:12px;color:#C84020;font-weight:600;background:rgba(200,64,32,.05)">${m.fire!==""&&m.fire!=null?m.fire:"—"}</td>
       <td style="text-align:center;font-size:12px;color:#1E70C8;font-weight:600;background:rgba(30,112,200,.05)">${m.water!==""&&m.water!=null?m.water:"—"}</td>
       <td style="text-align:center;font-size:12px;color:#A86010;font-weight:600;background:rgba(168,96,16,.05)">${m.earth!==""&&m.earth!=null?m.earth:"—"}</td>
-      ${[0,1,2,3,4,5,6].map(j=>{const v=(m.gifts||[])[j];return`<td class="${j===0?'grp-start':''}" style="text-align:center;font-size:12px;color:#A8822C;font-weight:600;background:rgba(201,168,76,.06)">${v!==""&&v!=null?v:"—"}</td>`;}).join("")}
-      ${[0,1,2].map(j=>{const v=(m.mentors||[])[j];return`<td class="${j===0?'grp-start':''}" style="text-align:center;font-size:12px;color:#6B3FA0;font-weight:600;background:rgba(107,63,160,.06)">${v!==""&&v!=null?v:"—"}</td>`;}).join("")}
+      ${[0,1,2,3,4,5,6].map(j=>{const v=(m.gifts||[])[j];const c=v!==""&&v!=null&&_comp.has(+v);return`<td class="${j===0?'grp-start':''}" style="text-align:center;font-size:12px;font-weight:${c?'700':'600'};${c?'background:linear-gradient(135deg,rgba(201,168,76,.35),rgba(154,40,40,.22));color:#7A3018':'color:#A8822C;background:rgba(201,168,76,.06)'}" title="${c?'完全牌（2倍能量·輾壓其他天賦）':''}">${v!==""&&v!=null?(c?'⚡':'')+v:"—"}</td>`;}).join("")}
+      ${[0,1,2].map(j=>{const v=(m.mentors||[])[j];const c=v!==""&&v!=null&&_comp.has(+v);return`<td class="${j===0?'grp-start':''}" style="text-align:center;font-size:12px;font-weight:${c?'700':'600'};${c?'background:linear-gradient(135deg,rgba(201,168,76,.35),rgba(154,40,40,.22));color:#7A3018':'color:#6B3FA0;background:rgba(107,63,160,.06)'}" title="${c?'完全牌（2倍能量·輾壓其他天賦）':''}">${v!==""&&v!=null?(c?'⚡':'')+v:"—"}</td>`;}).join("")}
       ${[0,1].map(j=>{const v=(m.shadows||[])[j];return`<td class="${j===0?'grp-start':''}" style="text-align:center;font-size:12px;color:#555;font-weight:600;background:rgba(85,85,85,.06)">${v!==""&&v!=null?v:"—"}</td>`;}).join("")}
       <td class="grp-start" style="text-align:center;font-size:12px;color:#1A3A8A;font-weight:600;background:rgba(26,58,138,.05)">${m.ys_cur!==""&&m.ys_cur!=null?m.ys_cur:"—"}</td>
       <td style="text-align:center;font-size:12px;color:#1A3A8A;font-weight:600;background:rgba(26,58,138,.05)">${m.ys_next!==""&&m.ys_next!=null?m.ys_next:"—"}</td>
@@ -4024,6 +4039,10 @@ function renderCards(){
     if(filterCompany&&filterCompany!=="__none__"&&m.company!==filterCompany)return;
     const de=domE(m);const col=EC[de];
     const g=gs(m);const tot=(+m.wind||0)+(+m.fire||0)+(+m.water||0)+(+m.earth||0)||100;
+    // 完全牌：天賦+導師同號（陰影不計）→ 2 倍能量
+    const _pcMts=ms(m);
+    const _pcComp=new Set(g.filter(n=>_pcMts.includes(n)));
+    const _pcChip=n=>`<span class="chip" style="background:linear-gradient(135deg,#C9A84C,#9A2828);color:#FAF3E0;font-weight:700;border:0">⚡${n} ${CN[n]||""}</span>`;
     const rankLabel=getRankLabel(m.rank);
     const rankColor=getRankColor(m.rank);
     const card=document.createElement("div");
@@ -4058,8 +4077,8 @@ ${(()=>{
         </div>`;}).join("")}
       </div>
       <div class="pcchips">
-${g.map(n=>`<span class="chip cg">${n} ${CN[n]||""}</span>`).join("")}
-        ${ms(m).map(n=>`<span class="chip cm">${n} ${CN[n]||""}</span>`).join("")}
+${g.map(n=>_pcComp.has(n)?_pcChip(n):`<span class="chip cg">${n} ${CN[n]||""}</span>`).join("")}
+        ${_pcMts.map(n=>_pcComp.has(n)?_pcChip(n):`<span class="chip cm">${n} ${CN[n]||""}</span>`).join("")}
         ${ss(m).map(n=>`<span class="chip cs">${n} ${CN[n]||""}</span>`).join("")}
         ${m.ys_cur!==""?`<span class="chip cy">年策 ${m.ys_cur} ${CN[+m.ys_cur]||""}</span>`:""}
       </div>
@@ -4150,12 +4169,15 @@ function duoFill(side) {
   // 顯示天賦/導師預覽
   const g = gs(m);
   const mts = ms(m);
+  // 完全牌：天賦+導師同號（陰影不計）→ 2 倍能量
+  const complete = g.filter(n => mts.includes(n));
   if(preview) {
     preview.style.display = 'block';
     preview.innerHTML =
       '<div style="margin-bottom:4px"><strong style="color:var(--navy)">' + esc(m.name) + '</strong></div>' +
       '<div>天賦：' + g.map(n=>n+' '+( CN[n]||'' )).join(' · ') + '</div>' +
-      '<div>導師：' + (mts.length ? mts.map(n=>n+' '+(CN[n]||'')).join(' · ') : '—') + '</div>';
+      '<div>導師：' + (mts.length ? mts.map(n=>n+' '+(CN[n]||'')).join(' · ') : '—') + '</div>' +
+      (complete.length ? '<div style="color:#9A2828;font-weight:600;margin-top:4px">⚡ 完全牌：' + complete.map(n=>n+' '+(CN[n]||'')).join('、') + '（2 倍能量）</div>' : '');
   }
 }
 
@@ -4298,17 +4320,30 @@ function calcDuo() {
 
   // ── 兩人對比卡片（官網深藍風格）──
   function renderPersonCard(el, name, gifts, mentors, isA) {
+    // 完全牌：天賦+導師同號（陰影不計）→ 2 倍能量
+    const completeSet = new Set(mentors.filter(n => gifts.allCards.includes(n)));
+    const completeArr = [...completeSet].sort((a,b)=>a-b);
+    const renderChip = (n, isMentor) => completeSet.has(n)
+      ? `<span style="background:linear-gradient(135deg,#C9A84C,#9A2828);border:0;border-radius:4px;padding:4px 9px;font-size:11px;color:#FAF3E0;font-weight:700;letter-spacing:.02em">⚡${n} ${CN[n]||""}</span>`
+      : (isMentor
+          ? `<span style="background:transparent;border:1px solid rgba(201,168,76,.25);border-radius:4px;padding:4px 9px;font-size:11px;color:rgba(232,216,168,.7);font-weight:500;letter-spacing:.02em">${n} ${CN[n]||""}</span>`
+          : `<span style="background:transparent;border:1px solid rgba(201,168,76,.35);border-radius:4px;padding:4px 9px;font-size:11px;color:#E8D8A8;font-weight:500;letter-spacing:.02em">${n} ${CN[n]||""}</span>`);
     el.innerHTML = `
       <div style="font-size:11px;color:var(--gold);letter-spacing:.2em;margin-bottom:.4rem;font-weight:600">${isA?"甲方":"乙方"}</div>
       <div style="font-size:22px;font-weight:300;color:#fff;margin-bottom:1rem;letter-spacing:.02em">${esc(name)}</div>
       <div style="font-size:10px;color:rgba(201,168,76,.7);margin-bottom:.4rem;letter-spacing:.15em;font-weight:600">— 天賦牌 —</div>
       <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.9rem">
-        ${gifts.allCards.map(n=>`<span style="background:transparent;border:1px solid rgba(201,168,76,.35);border-radius:4px;padding:4px 9px;font-size:11px;color:#E8D8A8;font-weight:500;letter-spacing:.02em">${n} ${CN[n]||""}</span>`).join("")}
+        ${gifts.allCards.map(n=>renderChip(n,false)).join("")}
       </div>
       <div style="font-size:10px;color:rgba(201,168,76,.7);margin-bottom:.4rem;letter-spacing:.15em;font-weight:600">— 導師牌 —</div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px">
-        ${mentors.length?mentors.map(n=>`<span style="background:transparent;border:1px solid rgba(201,168,76,.25);border-radius:4px;padding:4px 9px;font-size:11px;color:rgba(232,216,168,.7);font-weight:500;letter-spacing:.02em">${n} ${CN[n]||""}</span>`).join(""):'<span style="color:rgba(201,168,76,.5);font-size:11px">—</span>'}
-      </div>`;
+      <div style="display:flex;flex-wrap:wrap;gap:5px${completeArr.length?';margin-bottom:.8rem':''}">
+        ${mentors.length?mentors.map(n=>renderChip(n,true)).join(""):'<span style="color:rgba(201,168,76,.5);font-size:11px">—</span>'}
+      </div>
+      ${completeArr.length ? `
+        <div style="font-size:10px;color:#E8C97A;letter-spacing:.05em;line-height:1.6;border-top:1px solid rgba(201,168,76,.2);padding-top:.6rem">
+          ⚡ <b>完全牌</b>：${completeArr.map(n=>`${n}${CN[n]?" "+CN[n]:""}`).join("、")} — 2 倍能量、輾壓其他天賦
+        </div>
+      ` : ""}`;
   }
   renderPersonCard(document.getElementById("duo-a-card"), aName, aGifts, aMentors, true);
   renderPersonCard(document.getElementById("duo-b-card"), bName, bGifts, bMentors, false);
@@ -6085,6 +6120,9 @@ async function generateReport(){
     const gRaw=(m.gifts||[]).filter(g=>g!=="").map(g=>+g);
     const mRaw=(m.mentors||[m.mentor||""]).filter(g=>g!=="").map(g=>+g);
     const sRaw=(m.shadows||[m.shadow||""]).filter(g=>g!=="").map(g=>+g);
+    // 完全牌：天賦+導師同號（陰影不計），chip 套金紅漸層 + ⚡
+    const _compOv=new Set(gRaw.filter(n=>mRaw.includes(n)));
+    const _chipComp=n=>`<span class="chip" style="background:linear-gradient(135deg,#C9A84C,#9A2828);color:#FAF3E0;font-weight:700;border:0">⚡${n} ${CN[n]||""}</span>`;
     const tot=(+m.wind||0)+(+m.fire||0)+(+m.water||0)+(+m.earth||0)||100;
     const bars=["wind","fire","water","earth"].map(e=>`<div class="br"><div class="bl" style="color:${EC[e]}">${EN[e]}</div><div class="bt"><div class="bf" style="width:${(+m[e]||0)/tot*100}%;background:${EC[e]}"></div></div><div class="bv">${m[e]||0}%</div></div>`).join("");
     // 頭像：依性別顯示 ♂/♀/?，顏色對應
@@ -6096,7 +6134,7 @@ async function generateReport(){
     const emax=Math.max(...Object.values(evals));
     const eTops=Object.keys(evals).filter(k=>evals[k]===emax);
     const eChips=eTops.map(k=>`<span class="chip c${k}" style="font-size:11px">${ENAME[k]}</span>`).join(" ");
-    return`<div class="ovcard"><div class="ovhdr"><div class="ovav" style="background:${gAvBg};color:${gAvFg};font-size:20px;font-weight:400">${gSym}</div><div style="min-width:0"><div class="ovname">${esc(m.name)}</div><div style="margin-top:3px;display:flex;gap:4px;flex-wrap:wrap">${eChips}</div></div></div>${bars}<div class="pcchips">${gRaw.map(n=>`<span class="chip cg">${n} ${CN[n]||""}</span>`).join("")}${mRaw.map(n=>`<span class="chip cm">${n} ${CN[n]||""}</span>`).join("")}${sRaw.map(n=>`<span class="chip cs">${n} ${CN[n]||""}</span>`).join("")}${m.ys_cur!==""?`<span class="chip cy">年策 ${m.ys_cur} ${CN[+m.ys_cur]||""}</span>`:""}</div></div>`;
+    return`<div class="ovcard"><div class="ovhdr"><div class="ovav" style="background:${gAvBg};color:${gAvFg};font-size:20px;font-weight:400">${gSym}</div><div style="min-width:0"><div class="ovname">${esc(m.name)}</div><div style="margin-top:3px;display:flex;gap:4px;flex-wrap:wrap">${eChips}</div></div></div>${bars}<div class="pcchips">${gRaw.map(n=>_compOv.has(n)?_chipComp(n):`<span class="chip cg">${n} ${CN[n]||""}</span>`).join("")}${mRaw.map(n=>_compOv.has(n)?_chipComp(n):`<span class="chip cm">${n} ${CN[n]||""}</span>`).join("")}${sRaw.map(n=>`<span class="chip cs">${n} ${CN[n]||""}</span>`).join("")}${m.ys_cur!==""?`<span class="chip cy">年策 ${m.ys_cur} ${CN[+m.ys_cur]||""}</span>`:""}</div></div>`;
   }).join("");
 
   document.getElementById("rptarea").innerHTML=
@@ -7928,6 +7966,20 @@ function calcMMT(){
   document.getElementById("r-mentors").innerHTML=mentorCards.map(n=>`<span class="chip cm" style="font-size:13px;padding:5px 11px">${n} ${CN[n]||""}</span>`).join("");
   document.getElementById("r-mentor-steps").innerHTML=mentorSteps.join("<br>");
 
+  // ── 完全牌：天賦+導師同號（陰影不計）→ 2 倍能量、輾壓其他天賦 ──
+  const _giftNums=R.allCards.map(n=>+n);
+  const _mentorNums=mentorCards.map(n=>+n);
+  const completeCards=[...new Set(_giftNums.filter(n=>_mentorNums.includes(n)))].sort((a,b)=>a-b);
+  const _completeBox=document.getElementById("r-complete-box");
+  if(completeCards.length){
+    _completeBox.style.display="block";
+    document.getElementById("r-complete").innerHTML=completeCards.map(n=>
+      `<span class="chip" style="font-size:13px;padding:5px 11px;background:linear-gradient(135deg,#C9A84C,#9A2828);color:#FAF3E0;font-weight:600;border:0">${n} ${CN[n]||""}</span>`
+    ).join("");
+  }else{
+    _completeBox.style.display="none";
+  }
+
   document.getElementById("r-shadows").innerHTML=
     shadowList.length
       ? shadowList.map(s=>`<span class="chip cs" style="font-size:13px;padding:5px 11px">${s} ${CN[s]||""}</span>`).join("")
@@ -8241,12 +8293,19 @@ function quickCalcMMT(){
   while(ys_c3>22){ys_c3=dsum(ys_c3);}if(ys_c3===22)ys_c3=0;
   while(ys_n3>22){ys_n3=dsum(ys_n3);}if(ys_n3===22)ys_n3=0;
   const shadowStr2=scq.length?scq.map(n=>n+" "+CN[n]).join("、"):"無";
+  // 完全牌：天賦+導師同號（陰影不計）→ 2 倍能量
+  const _qcG=R.allCards.map(n=>+n);
+  const _qcM=mc.map(n=>+n);
+  const _qcComp=[...new Set(_qcG.filter(n=>_qcM.includes(n)))].sort((a,b)=>a-b);
   document.getElementById("qc-result").innerHTML=
     `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">`+
-    R.allCards.map(n=>`<span class="chip cg" style="font-size:12px">${n} ${CN[n]||""}</span>`).join("")+
+    R.allCards.map(n=>_qcComp.includes(+n)
+      ? `<span class="chip" style="font-size:12px;background:linear-gradient(135deg,#C9A84C,#9A2828);color:#FAF3E0;font-weight:700;border:0">⚡${n} ${CN[n]||""}</span>`
+      : `<span class="chip cg" style="font-size:12px">${n} ${CN[n]||""}</span>`).join("")+
     `</div><div style="color:var(--mu);font-size:12px;line-height:2">`+
     `天賦：${R.allCards.map(n=>n+"·"+CN[n]).join("、")}<br>`+
     `導師：${mc.map(n=>n+"·"+CN[n]).join("、")}<br>`+
+    (_qcComp.length?`<span style="color:#9A2828;font-weight:700">⚡ 完全牌：${_qcComp.map(n=>n+"·"+CN[n]).join("、")}（2 倍能量、輾壓其他天賦）</span><br>`:``)+
     `陰影：${shadowStr2}<br>`+
     `年策：目前 ${ys_c3} ${CN[ys_c3]||""}　生日後 ${ys_n3} ${CN[ys_n3]||""}</div>`;
   document.getElementById("qc-save-btn").style.display="block";
@@ -8494,7 +8553,12 @@ function updateBizFounderInfo(){
   if(!m||!m.name){info.textContent="";return;}
   const g=(m.gifts||[]).filter(x=>x!=="").map(n=>`${n}號`).join("、")||"—";
   const mts=ms(m).map(n=>`${n}號`).join("、")||"—";
-  info.innerHTML=`天賦：<b style="color:#8A6000">${g}</b>　導師：<b style="color:#8A6000">${mts}</b>`;
+  // 完全牌：天賦+導師同號
+  const _gN=(m.gifts||[]).filter(x=>x!=="").map(n=>+n);
+  const _mN=ms(m).map(n=>+n);
+  const _comp=[...new Set(_gN.filter(n=>_mN.includes(n)))].sort((a,b)=>a-b);
+  const _compStr=_comp.length?`　<span style="color:#9A2828;font-weight:700">⚡完全牌：${_comp.map(n=>n+"號").join("、")}（2倍）</span>`:"";
+  info.innerHTML=`天賦：<b style="color:#8A6000">${g}</b>　導師：<b style="color:#8A6000">${mts}</b>${_compStr}`;
 }
 
 // 21 張卡的名稱表（沿用 CN，0-21 都有）
@@ -8561,7 +8625,12 @@ function updateBizCompanyInfo(company){
   if(!company){info.textContent="";return;}
   const g=(company.gifts||[]).filter(x=>x!=="").sort((a,b)=>(+a)-(+b)).map(n=>`${n}號`).join("、")||"—";
   const mts=ms(company).map(n=>`${n}號`).join("、")||"—";
-  info.innerHTML=`天賦：<b style="color:#0A2A5A">${g}</b>　導師：<b style="color:#0A2A5A">${mts}</b>`;
+  // 完全牌：天賦+導師同號
+  const _gN=(company.gifts||[]).filter(x=>x!=="").map(n=>+n);
+  const _mN=ms(company).map(n=>+n);
+  const _comp=[...new Set(_gN.filter(n=>_mN.includes(n)))].sort((a,b)=>a-b);
+  const _compStr=_comp.length?`　<span style="color:#9A2828;font-weight:700">⚡完全牌：${_comp.map(n=>n+"號").join("、")}（2倍）</span>`:"";
+  info.innerHTML=`天賦：<b style="color:#0A2A5A">${g}</b>　導師：<b style="color:#0A2A5A">${mts}</b>${_compStr}`;
 }
 
 // 相容性空殼（避免舊程式碼呼叫炸掉）
