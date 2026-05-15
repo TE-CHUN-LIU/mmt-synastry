@@ -701,6 +701,18 @@ td.tdl{text-align:left;padding-left:10px}
 .twrap table th.th-name,
 .twrap table td.td-name{max-width:100px;width:100px}
 .twrap table td.td-name .cname{min-width:0;width:100%;font-size:13px}
+/* 成員資料庫表格：放寬最小寬度，讓欄位能依內容收縮 */
+.twrap table{min-width:0}
+/* T/M/S 數字格：統一寬度，讓導師牌跟天賦牌欄位視覺對齊 */
+.twrap table thead tr.sub th.tms-th,
+.twrap table tbody td.tms-td{
+  width:30px;min-width:30px;max-width:30px;
+  padding:5px 2px;white-space:nowrap;
+}
+/* 能量 / 年策格：依內容收縮（不撐寬） */
+.twrap table tbody td.fit-td{
+  width:1%;white-space:nowrap;padding:5px 6px;
+}
 .cpct{width:46px}
 .cnum{width:36px}
 .rdel{
@@ -2143,9 +2155,9 @@ td.tdl{text-align:left;padding-left:10px}
             <tr class="sub">
               <th class="grp-start" style="color:#6EE7B7;cursor:pointer;user-select:none" onclick="sortTable('wind')">風 <span id="si-wind"></span></th><th style="color:#FCA5A5;cursor:pointer;user-select:none" onclick="sortTable('fire')">火 <span id="si-fire"></span></th>
               <th style="color:#93C5FD;cursor:pointer;user-select:none" onclick="sortTable('water')">水 <span id="si-water"></span></th><th style="color:#FCD34D;cursor:pointer;user-select:none" onclick="sortTable('earth')">土 <span id="si-earth"></span></th>
-              <th class="grp-start">T1</th><th>T2</th><th>T3</th><th>T4</th><th>T5</th><th>T6</th><th>T7</th>
-              <th class="grp-start">M1</th><th>M2</th><th>M3</th>
-              <th class="grp-start">S1</th><th>S2</th>
+              <th class="grp-start tms-th"></th><th class="tms-th"></th><th class="tms-th"></th><th class="tms-th"></th><th class="tms-th"></th><th class="tms-th"></th><th class="tms-th"></th>
+              <th class="grp-start tms-th"></th><th class="tms-th"></th><th class="tms-th"></th>
+              <th class="grp-start tms-th"></th><th class="tms-th"></th>
               <th class="grp-start">目前</th><th>生日後</th>
             </tr>
           </thead>
@@ -3858,15 +3870,15 @@ function renderTable(){
       <td><select class="ci" style="font-size:12px;padding:4px 3px;min-width:78px" onchange="setMemberRankOrType(${i},this.value);debSave();renderCards();renderTable()">
         <option value="">—</option>${rankOpts}<option disabled>──────</option>${companyOpt}
       </select></td>
-      <td class="grp-start" style="text-align:center;font-size:12px;color:#1A9E70;font-weight:600;background:rgba(26,158,112,.05)">${m.wind!==""&&m.wind!=null?m.wind:"—"}</td>
-      <td style="text-align:center;font-size:12px;color:#C84020;font-weight:600;background:rgba(200,64,32,.05)">${m.fire!==""&&m.fire!=null?m.fire:"—"}</td>
-      <td style="text-align:center;font-size:12px;color:#1E70C8;font-weight:600;background:rgba(30,112,200,.05)">${m.water!==""&&m.water!=null?m.water:"—"}</td>
-      <td style="text-align:center;font-size:12px;color:#A86010;font-weight:600;background:rgba(168,96,16,.05)">${m.earth!==""&&m.earth!=null?m.earth:"—"}</td>
-      ${[0,1,2,3,4,5,6].map(j=>{const v=(m.gifts||[])[j];const c=v!==""&&v!=null&&_comp.has(+v);return`<td class="${j===0?'grp-start':''}" style="text-align:center;font-size:12px;font-weight:${c?'700':'600'};${c?'background:linear-gradient(135deg,rgba(201,168,76,.35),rgba(154,40,40,.22));color:#7A3018':'color:#A8822C;background:rgba(201,168,76,.06)'}" title="${c?'完全牌（2倍能量·輾壓其他天賦）':''}">${v!==""&&v!=null?(c?'⚡':'')+v:"—"}</td>`;}).join("")}
-      ${[0,1,2].map(j=>{const v=(m.mentors||[])[j];const c=v!==""&&v!=null&&_comp.has(+v);return`<td class="${j===0?'grp-start':''}" style="text-align:center;font-size:12px;font-weight:${c?'700':'600'};${c?'background:linear-gradient(135deg,rgba(201,168,76,.35),rgba(154,40,40,.22));color:#7A3018':'color:#6B3FA0;background:rgba(107,63,160,.06)'}" title="${c?'完全牌（2倍能量·輾壓其他天賦）':''}">${v!==""&&v!=null?(c?'⚡':'')+v:"—"}</td>`;}).join("")}
-      ${[0,1].map(j=>{const v=(m.shadows||[])[j];return`<td class="${j===0?'grp-start':''}" style="text-align:center;font-size:12px;color:#555;font-weight:600;background:rgba(85,85,85,.06)" title="${isCo?'企業不解讀陰影':''}">${isCo?'—':(v!==""&&v!=null?v:"—")}</td>`;}).join("")}
-      <td class="grp-start" style="text-align:center;font-size:12px;color:#1A3A8A;font-weight:600;background:rgba(26,58,138,.05)">${m.ys_cur!==""&&m.ys_cur!=null?m.ys_cur:"—"}</td>
-      <td style="text-align:center;font-size:12px;color:#1A3A8A;font-weight:600;background:rgba(26,58,138,.05)">${m.ys_next!==""&&m.ys_next!=null?m.ys_next:"—"}</td>
+      <td class="grp-start fit-td" style="text-align:center;font-size:12px;color:#1A9E70;font-weight:600;background:rgba(26,158,112,.05)">${m.wind!==""&&m.wind!=null?m.wind:"—"}</td>
+      <td class="fit-td" style="text-align:center;font-size:12px;color:#C84020;font-weight:600;background:rgba(200,64,32,.05)">${m.fire!==""&&m.fire!=null?m.fire:"—"}</td>
+      <td class="fit-td" style="text-align:center;font-size:12px;color:#1E70C8;font-weight:600;background:rgba(30,112,200,.05)">${m.water!==""&&m.water!=null?m.water:"—"}</td>
+      <td class="fit-td" style="text-align:center;font-size:12px;color:#A86010;font-weight:600;background:rgba(168,96,16,.05)">${m.earth!==""&&m.earth!=null?m.earth:"—"}</td>
+      ${[0,1,2,3,4,5,6].map(j=>{const v=(m.gifts||[])[j];const c=v!==""&&v!=null&&_comp.has(+v);return`<td class="tms-td${j===0?' grp-start':''}" style="text-align:center;font-size:12px;font-weight:${c?'700':'600'};${c?'background:linear-gradient(135deg,rgba(201,168,76,.35),rgba(154,40,40,.22));color:#7A3018':'color:#A8822C;background:rgba(201,168,76,.06)'}" title="${c?'完全牌（2倍能量·輾壓其他天賦）':''}">${v!==""&&v!=null?(c?'⚡':'')+v:"—"}</td>`;}).join("")}
+      ${[0,1,2].map(j=>{const v=(m.mentors||[])[j];const c=v!==""&&v!=null&&_comp.has(+v);return`<td class="tms-td${j===0?' grp-start':''}" style="text-align:center;font-size:12px;font-weight:${c?'700':'600'};${c?'background:linear-gradient(135deg,rgba(201,168,76,.35),rgba(154,40,40,.22));color:#7A3018':'color:#6B3FA0;background:rgba(107,63,160,.06)'}" title="${c?'完全牌（2倍能量·輾壓其他天賦）':''}">${v!==""&&v!=null?(c?'⚡':'')+v:"—"}</td>`;}).join("")}
+      ${[0,1].map(j=>{const v=(m.shadows||[])[j];return`<td class="tms-td${j===0?' grp-start':''}" style="text-align:center;font-size:12px;color:#555;font-weight:600;background:rgba(85,85,85,.06)" title="${isCo?'企業不解讀陰影':''}">${isCo?'—':(v!==""&&v!=null?v:"—")}</td>`;}).join("")}
+      <td class="grp-start fit-td" style="text-align:center;font-size:12px;color:#1A3A8A;font-weight:600;background:rgba(26,58,138,.05)">${m.ys_cur!==""&&m.ys_cur!=null?m.ys_cur:"—"}</td>
+      <td class="fit-td" style="text-align:center;font-size:12px;color:#1A3A8A;font-weight:600;background:rgba(26,58,138,.05)">${m.ys_next!==""&&m.ys_next!=null?m.ys_next:"—"}</td>
       <td class="noprint"><button class="rdel" onclick="delRow(${i})">✕</button></td>`;
     tb.appendChild(tr);
   });
