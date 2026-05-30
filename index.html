@@ -1869,22 +1869,28 @@ td.tdl{text-align:left;padding-left:10px}
             <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem">四大能量詳解（點擊展開閱讀）</div>
             <div id="energy-details-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px"></div>
           </div>
-          <!-- 天賦牌 -->
-          <div style="background:var(--sf);border:2px solid var(--bdc);border-radius:var(--rl);padding:1.1rem">
+          <!-- 天賦牌（全寬，打橫 wrap，手機好讀）-->
+          <div style="background:var(--sf);border:2px solid var(--bdc);border-radius:var(--rl);padding:1.1rem;grid-column:1/-1">
             <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem">天賦牌</div>
-            <div id="r-gifts" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+            <div id="r-gifts" style="display:flex;flex-wrap:wrap;gap:7px"></div>
             <div style="display:none">
               <div style="font-size:11px;color:var(--hi);margin-bottom:4px">計算步驟</div>
               <div id="r-gift-steps" style="font-size:11px;color:var(--mu);line-height:1.8;font-family:monospace"></div>
             </div>
           </div>
-          <!-- 導師牌 -->
-          <div style="background:var(--sf);border:1px solid #B8CCEE;border-radius:var(--rl);padding:1.1rem">
-            <div style="font-size:11px;font-weight:700;color:#5090D0;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem">導師牌</div>
-            <div id="r-mentors" style="display:flex;flex-wrap:wrap;gap:5px"></div>
-            <div style="display:none">
-              <div style="font-size:11px;color:var(--hi);margin-bottom:4px">計算步驟</div>
-              <div id="r-mentor-steps" style="font-size:11px;color:var(--mu);line-height:1.8;font-family:monospace"></div>
+          <!-- 導師牌 + 陰影牌（合併一張卡，卡內左右並排）-->
+          <div style="background:var(--sf);border:2px solid #B6A8C0;border-radius:var(--rl);padding:1.1rem;grid-column:1/-1">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem">
+              <div>
+                <div style="font-size:11px;font-weight:700;color:#5090D0;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem">導師牌</div>
+                <div id="r-mentors" style="display:flex;flex-wrap:wrap;gap:7px"></div>
+                <div style="display:none"><div id="r-mentor-steps" style="font-size:11px;color:var(--mu);line-height:1.8;font-family:monospace"></div></div>
+              </div>
+              <div style="border-left:1px solid var(--bd);padding-left:1.2rem">
+                <div style="font-size:11px;font-weight:700;color:#C06060;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem">陰影牌</div>
+                <div id="r-shadows" style="display:flex;flex-wrap:wrap;gap:7px"></div>
+                <div style="display:none"><div id="r-shadow-steps" style="font-size:11px;color:var(--mu);line-height:1.8;font-family:monospace"></div></div>
+              </div>
             </div>
           </div>
           <!-- 完全牌（雙倍能量）— 只在天賦+導師有重疊時顯示 -->
@@ -1898,17 +1904,8 @@ td.tdl{text-align:left;padding-left:10px}
               特徵更明確、會輾壓其他天賦的優先權。讀盤時要把這張牌當作你最顯著、最優先的主軸來看。
             </div>
           </div>
-          <!-- 陰影牌 -->
-          <div style="background:var(--sf);border:2px solid #7A2A2A;border-radius:var(--rl);padding:1.1rem">
-            <div style="font-size:11px;font-weight:700;color:#C06060;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem">陰影牌</div>
-            <div id="r-shadows" style="display:flex;flex-wrap:wrap;gap:5px"></div>
-            <div style="display:none">
-              <div style="font-size:11px;color:var(--hi);margin-bottom:4px">計算步驟</div>
-              <div id="r-shadow-steps" style="font-size:11px;color:var(--mu);line-height:1.8;font-family:monospace"></div>
-            </div>
-          </div>
-          <!-- 年度策略 -->
-          <div style="background:var(--sf);border:2px solid #2A7A5A;border-radius:var(--rl);padding:1.1rem">
+          <!-- 年度策略（全寬）-->
+          <div style="background:var(--sf);border:2px solid #2A7A5A;border-radius:var(--rl);padding:1.1rem;grid-column:1/-1">
             <div style="font-size:11px;font-weight:700;color:#40B070;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem">年度策略</div>
             <div id="r-ys" style="display:flex;flex-wrap:wrap;gap:5px"></div>
             <div style="display:none">
